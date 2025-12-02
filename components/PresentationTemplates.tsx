@@ -86,37 +86,121 @@ const getArrowStyles = (direction: 'left' | 'right', isFullscreen?: boolean) => 
 // Pure black & white, Swiss design influence
 // ============================================
 
-export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string }> = ({ slide, logoUrl }) => {
+// ============================================
+// EDITABLE COMPONENT
+// ============================================
+
+interface EditableTextProps {
+    value: string;
+    onChange: (val: string) => void;
+    style?: React.CSSProperties;
+    tagName?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'div';
+    className?: string;
+}
+
+const EditableText: React.FC<EditableTextProps> = ({ value, onChange, style, tagName = 'p', className }) => {
+    const Tag = tagName as any;
+
+    return (
+        <Tag
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e: React.FocusEvent<HTMLElement>) => onChange(e.currentTarget.textContent || '')}
+            style={{ ...style, outline: 'none', cursor: 'text' }}
+            className={className}
+        >
+            {value}
+        </Tag>
+    );
+};
+
+// ============================================
+// MINIMALIST TEMPLATE - "Stark"
+// Pure black & white, Swiss design influence
+// ============================================
+
+export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?: (field: string, value: any) => void }> = ({ slide, logoUrl, onEdit }) => {
+    const handleEdit = (field: string, value: string) => {
+        if (onEdit) onEdit(field, value);
+    };
+
     switch (slide.type) {
         case 'title':
             return (
                 <div style={styles.min.titleSlide}>
                     {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 40, marginBottom: 40 }} />}
-                    <h1 style={styles.min.titleMain}>{slide.title}</h1>
-                    <p style={styles.min.titleSub}>{slide.subtitle}</p>
+                    <EditableText
+                        tagName="h1"
+                        style={styles.min.titleMain}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.titleSub}
+                        value={slide.subtitle || ''}
+                        onChange={(val) => handleEdit('subtitle', val)}
+                    />
                 </div>
             );
         case 'statement':
             return (
                 <div style={styles.min.statementSlide}>
-                    <p style={styles.min.statementText}>{slide.text}</p>
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.statementText}
+                        value={slide.text || ''}
+                        onChange={(val) => handleEdit('text', val)}
+                    />
                 </div>
             );
         case 'two-column':
             return (
                 <div style={styles.min.twoColSlide}>
-                    <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
+                    <EditableText
+                        tagName="h2"
+                        style={styles.min.twoColTitle}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
                     <div style={styles.min.twoColContainer}>
                         <div style={styles.min.column}>
                             {Array.isArray(slide.left) && slide.left.map((item, i) => (
-                                <p key={i} style={styles.min.columnItem}>{item}</p>
+                                <EditableText
+                                    key={i}
+                                    tagName="p"
+                                    style={styles.min.columnItem}
+                                    value={item}
+                                    onChange={(val) => {
+                                        const newLeft = [...(slide.left as string[])];
+                                        newLeft[i] = val;
+                                        handleEdit('left', newLeft as any);
+                                    }}
+                                />
                             ))}
+                            {/* Handle image placeholder if it's a string (though usually array for two-col) */}
+                            {!Array.isArray(slide.left) && typeof slide.left === 'string' && (
+                                <img src={slide.left} alt="Left content" style={{ maxWidth: '100%', borderRadius: 8 }} />
+                            )}
                         </div>
                         <div style={styles.min.columnDivider} />
                         <div style={styles.min.column}>
                             {Array.isArray(slide.right) && slide.right.map((item, i) => (
-                                <p key={i} style={styles.min.columnItem}>{item}</p>
+                                <EditableText
+                                    key={i}
+                                    tagName="p"
+                                    style={styles.min.columnItem}
+                                    value={item}
+                                    onChange={(val) => {
+                                        const newRight = [...(slide.right as string[])];
+                                        newRight[i] = val;
+                                        handleEdit('right', newRight as any);
+                                    }}
+                                />
                             ))}
+                            {!Array.isArray(slide.right) && typeof slide.right === 'string' && (
+                                <img src={slide.right} alt="Right content" style={{ maxWidth: '100%', borderRadius: 8 }} />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -124,27 +208,54 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string }> = ({ 
         case 'quote':
             return (
                 <div style={styles.min.quoteSlide}>
-                    <p style={styles.min.quoteText}>&quot;{slide.text}&quot;</p>
-                    <p style={styles.min.quoteAuthor}>— {slide.author}</p>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <EditableText
+                            tagName="p"
+                            style={styles.min.quoteText}
+                            value={`"${slide.text}"`}
+                            onChange={(val) => handleEdit('text', val.replace(/^"|"$/g, ''))}
+                        />
+                    </div>
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.quoteAuthor}
+                        value={`— ${slide.author}`}
+                        onChange={(val) => handleEdit('author', val.replace(/^—\s*/, ''))}
+                    />
                 </div>
             );
         case 'end':
             return (
                 <div style={styles.min.endSlide}>
-                    <p style={styles.min.endText}>{slide.text || slide.title}</p>
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.endText}
+                        value={slide.text || slide.title || ''}
+                        onChange={(val) => handleEdit(slide.text ? 'text' : 'title', val)}
+                    />
                 </div>
             );
         default:
             return (
                 <div style={styles.min.statementSlide}>
-                    <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
-                    <p style={styles.min.statementText}>{slide.text || slide.detail}</p>
+                    <EditableText
+                        tagName="h2"
+                        style={styles.min.twoColTitle}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.statementText}
+                        value={slide.text || slide.detail || ''}
+                        onChange={(val) => handleEdit(slide.text ? 'text' : 'detail', val)}
+                    />
                 </div>
             );
     }
 };
 
-export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, isFullscreen }) => {
+export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -153,15 +264,22 @@ export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, i
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
+            // Only navigate if not editing (active element is body)
+            if (document.activeElement === document.body) {
+                if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [slides.length, nextSlide, prevSlide]);
 
     const renderSlide = (slide: Slide) => {
-        return <MinimalistSlide slide={slide} logoUrl={logoUrl} />;
+        return <MinimalistSlide
+            slide={slide}
+            logoUrl={logoUrl}
+            onEdit={(field, val) => onEdit && onEdit(currentSlide, field, val)}
+        />;
     };
 
     return (

@@ -43,6 +43,7 @@ export default function Home() {
 
   // Customization
   const [logo, setLogo] = useState<string | null>(null);
+  const [projectImages, setProjectImages] = useState<string[]>([]);
   const [accentColor, setAccentColor] = useState('#4A9B8C');
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('minimalist');
 
@@ -56,6 +57,7 @@ export default function Home() {
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const projectImagesInputRef = useRef<HTMLInputElement>(null);
 
   // Handlers
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +83,14 @@ export default function Home() {
     if (f) {
       const objectUrl = URL.createObjectURL(f);
       setLogo(objectUrl);
+    }
+  };
+
+  const handleProjectImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const newImages = files.map(f => URL.createObjectURL(f));
+      setProjectImages(prev => [...prev, ...newImages].slice(0, 5));
     }
   };
 
@@ -167,6 +177,7 @@ export default function Home() {
           content: contentToUse,
           url: urlToUse,
           notes,
+          imageCount: projectImages.length,
         }),
       });
 
@@ -176,7 +187,38 @@ export default function Home() {
       clearInterval(stepInterval);
 
       if (data.presentation) {
-        setPresentation(data.presentation);
+        // Post-process slides to replace image placeholders
+        const processedSlides = data.presentation.slides.map((slide: any) => {
+          const replacePlaceholders = (str: string) => {
+            if (typeof str !== 'string') return str;
+            const match = str.match(/{{USER_IMAGE_(\d+)}}/);
+            if (match) {
+              const index = parseInt(match[1]) - 1;
+              if (projectImages[index]) {
+                return projectImages[index]; // Return the blob URL
+              }
+            }
+            return str;
+          };
+
+          // Deep traverse to find and replace placeholders
+          const processObject = (obj: any): any => {
+            if (typeof obj === 'string') return replacePlaceholders(obj);
+            if (Array.isArray(obj)) return obj.map(processObject);
+            if (typeof obj === 'object' && obj !== null) {
+              const newObj: any = {};
+              for (const key in obj) {
+                newObj[key] = processObject(obj[key]);
+              }
+              return newObj;
+            }
+            return obj;
+          };
+
+          return processObject(slide);
+        });
+
+        setPresentation({ ...data.presentation, slides: processedSlides });
         setStep('result');
       } else {
         throw new Error('Invalid response format');
@@ -190,6 +232,13 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSlideEdit = (slideIndex: number, field: string, value: any) => {
+    if (!presentation) return;
+    const newSlides = [...presentation.slides];
+    newSlides[slideIndex] = { ...newSlides[slideIndex], [field]: value };
+    setPresentation({ ...presentation, slides: newSlides });
   };
 
   const [scale, setScale] = useState(1);
@@ -433,7 +482,7 @@ export default function Home() {
                       </div>
 
                       <div className={styles.customGroup}>
-                        <label>Branding</label>
+                        <label>Branding & Images</label>
                         <div className={styles.brandingRow}>
                           <div
                             className={styles.logoUpload}
@@ -453,6 +502,42 @@ export default function Home() {
                               accept="image/*"
                               hidden
                             />
+                          </div>
+
+                          {/* Project Images Upload */}
+                          <div className={styles.projectImagesContainer}>
+                            <div className={styles.projectImagesGrid}>
+                              {projectImages.map((img, i) => (
+                                <div key={i} className={styles.miniImagePreview} style={{ backgroundImage: `url(${img})` }}>
+                                  <button
+                                    className={styles.removeImageBtn}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setProjectImages(prev => prev.filter((_, idx) => idx !== i));
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                              {projectImages.length < 5 && (
+                                <div
+                                  className={styles.addImageBtn}
+                                  onClick={() => projectImagesInputRef.current?.click()}
+                                >
+                                  <span>+ Add Image</span>
+                                </div>
+                              )}
+                            </div>
+                            <input
+                              type="file"
+                              ref={projectImagesInputRef}
+                              onChange={handleProjectImagesUpload}
+                              accept="image/*"
+                              multiple
+                              hidden
+                            />
+                            <p className={styles.inputHelp}>Upload up to 5 images for the AI to use.</p>
                           </div>
 
                           <div className={styles.colorPickerContainer}>
@@ -566,7 +651,8 @@ export default function Home() {
 
               <div className={styles.viewerWrapper}>
                 {selectedTemplate === 'minimalist' && (
-                  <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                  // @ts-ignore
+                  <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} onEdit={handleSlideEdit} />
                 )}
                 {selectedTemplate === 'hybrid' && (
                   <HybridTemplate slides={presentation.slides} accentColor={accentColor} logoUrl={logo || undefined} />

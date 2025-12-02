@@ -11,11 +11,12 @@ interface GenerateRequest {
     content: string;
     url: string;
     notes?: string;
+    imageCount?: number;
 }
 
 export async function POST(req: Request) {
     try {
-        const { title, description, content, notes, url } = await req.json();
+        const { title, description, content, notes, url, imageCount = 0 } = await req.json();
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey || !genAI) {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
     Description: ${description}
     Content: ${content ? content.substring(0, 3000) : ''}
     User Notes: ${notes}
+    Available User Images: ${imageCount}
     
     Generate a JSON object with a 'presentation' key containing:
     1. 'title': The main title of the deck.
@@ -48,6 +50,14 @@ export async function POST(req: Request) {
     - 'grid': { type: 'grid', title: string, items: { icon: string (emoji), label: string }[] (4 items) }
     - 'split': { type: 'split', left: { title: string, value: string, label: string }, right: { title: string, value: string, label: string } } (Use for comparisons like Before/After)
     - 'end': { type: 'end', title: string, cta: string }
+    
+    IMPORTANT: You have ${imageCount} user images available.
+    - You MUST use them where appropriate by inserting the placeholder "{{USER_IMAGE_1}}", "{{USER_IMAGE_2}}", etc. (up to ${imageCount}).
+    - You can place these placeholders in:
+      - 'two-column' -> 'left' or 'right' array (as a single item)
+      - 'grid' -> 'icon' field
+      - 'split' -> 'value' field
+    - Do NOT invent image URLs. Only use the placeholders if you have images available.
 
     Ensure the content is concise, professional, and impactful.
     
