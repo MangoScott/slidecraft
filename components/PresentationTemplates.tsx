@@ -336,9 +336,9 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
 
             {/* External Navigation Arrows */}
             {/* @ts-ignore */}
-            <button onClick={prevSlide} style={{ ...getArrowStyles('left', isFullscreen), color: isFullscreen ? 'white' : accentColor, borderColor: isFullscreen ? 'transparent' : accentColor }}>←</button>
+            <button onClick={prevSlide} style={isFullscreen ? getArrowStyles('left', true) : { ...getArrowStyles('left', false), color: accentColor, borderColor: accentColor }}>←</button>
             {/* @ts-ignore */}
-            <button onClick={nextSlide} style={{ ...getArrowStyles('right', isFullscreen), color: isFullscreen ? 'white' : accentColor, borderColor: isFullscreen ? 'transparent' : accentColor }}>→</button>
+            <button onClick={nextSlide} style={isFullscreen ? getArrowStyles('right', true) : { ...getArrowStyles('right', false), color: accentColor, borderColor: accentColor }}>→</button>
 
             <div style={styles.hyb.nav}>
                 <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
@@ -654,12 +654,12 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, i
 
             {/* External Navigation Arrows */}
             {/* @ts-ignore */}
-            <button onClick={prevSlide} style={{ ...getArrowStyles('left', isFullscreen), background: isFullscreen ? 'rgba(0,0,0,0.2)' : colors.pink, border: 'none', color: 'white' }}>←</button>
+            <button onClick={prevSlide} style={isFullscreen ? getArrowStyles('left', true) : { ...getArrowStyles('left', false), background: colors.pink, border: 'none', color: 'white' }}>←</button>
             {/* @ts-ignore */}
-            <button onClick={nextSlide} style={{ ...getArrowStyles('right', isFullscreen), background: isFullscreen ? 'rgba(0,0,0,0.2)' : colors.green, border: 'none', color: 'white' }}>→</button>
+            <button onClick={nextSlide} style={isFullscreen ? getArrowStyles('right', true) : { ...getArrowStyles('right', false), background: colors.green, border: 'none', color: 'white' }}>→</button>
 
             <div style={styles.max.nav}>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1}</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1} / {slides.length}</span>
             </div>
             {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
         </div>
