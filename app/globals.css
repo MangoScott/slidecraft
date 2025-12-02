@@ -33,24 +33,7 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark Mode Adaptation */
-    --bg-color: #1a1a1a;
-    --text-color: #fafafa;
-    --text-muted: #a0a0a0;
-    --surface-color: #2a2a2a;
-
-    --bg-primary: var(--bg-color);
-    --bg-secondary: var(--surface-color);
-    --bg-card: #2a2a2a;
-
-    --text-primary: var(--text-color);
-    --text-secondary: var(--text-muted);
-
-    --border-color: rgba(255, 255, 255, 0.1);
-  }
-}
+/* Dark mode removed - always use light Nouri aesthetic */
 
 * {
   box-sizing: border-box;
