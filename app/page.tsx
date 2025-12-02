@@ -218,6 +218,46 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, [isFullscreen]);
 
+  // Fullscreen controls (Escape key & Cursor hiding)
+  const [showCursor, setShowCursor] = useState(true);
+  const cursorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      setShowCursor(true);
+      if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    const handleMouseMove = () => {
+      setShowCursor(true);
+      if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
+      cursorTimeoutRef.current = setTimeout(() => {
+        setShowCursor(false);
+      }, 3000);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    // Initial timeout start
+    cursorTimeoutRef.current = setTimeout(() => {
+      setShowCursor(false);
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
+    };
+  }, [isFullscreen]);
+
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
@@ -499,7 +539,10 @@ export default function Home() {
               </div>
 
               {isFullscreen && (
-                <div className={styles.fullscreenWrapper}>
+                <div
+                  className={styles.fullscreenWrapper}
+                  style={{ cursor: showCursor ? 'default' : 'none' }}
+                >
                   <button className={styles.fullscreenClose} onClick={toggleFullscreen}>×</button>
                   <div
                     className={styles.viewerWrapper}

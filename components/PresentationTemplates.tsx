@@ -57,10 +57,10 @@ const getArrowStyles = (direction: 'left' | 'right', isFullscreen?: boolean) => 
         position: isFullscreen ? 'fixed' : 'absolute',
         top: '50%',
         transform: 'translateY(-50%)',
-        background: isFullscreen ? 'rgba(255, 255, 255, 0.1)' : 'white',
-        border: isFullscreen ? 'none' : '1px solid #ddd',
-        width: isFullscreen ? 60 : 50,
-        height: isFullscreen ? 60 : 50,
+        background: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : 'white',
+        border: isFullscreen ? '2px solid rgba(255, 255, 255, 0.3)' : '1px solid #ddd',
+        width: isFullscreen ? 56 : 50,
+        height: isFullscreen ? 56 : 50,
         borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
@@ -70,7 +70,7 @@ const getArrowStyles = (direction: 'left' | 'right', isFullscreen?: boolean) => 
         boxShadow: isFullscreen ? 'none' : '0 4px 12px rgba(0,0,0,0.1)',
         transition: 'all 0.2s',
         zIndex: 1000,
-        color: isFullscreen ? 'rgba(255, 255, 255, 0.7)' : '#1a1a1a',
+        color: isFullscreen ? 'white' : '#1a1a1a',
         backdropFilter: isFullscreen ? 'blur(4px)' : 'none',
     };
 
