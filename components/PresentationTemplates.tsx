@@ -34,7 +34,25 @@ interface TemplateProps {
     accentColor?: string;
     logoUrl?: string;
     isFullscreen?: boolean;
+    onAdd?: (index: number) => void;
+    onDelete?: (index: number) => void;
 }
+
+const GlobalStyles = () => (
+    <style>{`
+        .editable-text:hover {
+            border-bottom: 1px dashed rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.02);
+        }
+        .slide-action-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .slide-container:hover .slide-action-btn {
+            opacity: 1;
+        }
+    `}</style>
+);
 
 interface Shape {
     id: number;
@@ -107,7 +125,7 @@ const EditableText: React.FC<EditableTextProps> = ({ value, onChange, style, tag
             suppressContentEditableWarning
             onBlur={(e: React.FocusEvent<HTMLElement>) => onChange(e.currentTarget.textContent || '')}
             style={{ ...style, outline: 'none', cursor: 'text' }}
-            className={className}
+            className={`editable-text ${className || ''}`}
         >
             {value}
         </Tag>
@@ -255,11 +273,18 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     }
 };
 
-export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit }) => {
+export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
     const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+
+    // Ensure currentSlide is valid if slides are deleted
+    useEffect(() => {
+        if (currentSlide >= slides.length && slides.length > 0) {
+            setCurrentSlide(slides.length - 1);
+        }
+    }, [slides.length, currentSlide]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -275,6 +300,7 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
     }, [slides.length, nextSlide, prevSlide]);
 
     const renderSlide = (slide: Slide) => {
+        if (!slide) return null;
         return <MinimalistSlide
             slide={slide}
             logoUrl={logoUrl}
@@ -282,8 +308,11 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
         />;
     };
 
+    if (slides.length === 0) return <div style={{ color: '#666' }}>No slides</div>;
+
     return (
-        <div style={styles.min.container}>
+        <div style={styles.min.container} className="slide-container">
+            <GlobalStyles />
             <div style={styles.min.slideContainer}>
                 {renderSlide(slides[currentSlide])}
             </div>
@@ -294,8 +323,60 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
             {/* @ts-ignore */}
             <button onClick={nextSlide} style={getArrowStyles('right', isFullscreen)}>→</button>
 
+            {/* Slide Management Buttons */}
+            {!isFullscreen && (
+                <>
+                    <button
+                        className="slide-action-btn"
+                        onClick={() => onDelete && onDelete(currentSlide)}
+                        style={{
+                            position: 'absolute',
+                            top: 20,
+                            right: 20,
+                            background: '#FF6B6B',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: 32,
+                            height: 32,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            zIndex: 100,
+                        }}
+                        title="Delete Slide"
+                    >
+                        🗑️
+                    </button>
+                </>
+            )}
+
             <div style={styles.min.nav}>
                 <span style={styles.min.slideNum}>{currentSlide + 1} / {slides.length}</span>
+                {!isFullscreen && onAdd && (
+                    <button
+                        onClick={() => onAdd(currentSlide)}
+                        style={{
+                            background: '#4A9B8C',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            marginLeft: 10,
+                        }}
+                        title="Add Slide"
+                    >
+                        +
+                    </button>
+                )}
             </div>
             {!isFullscreen && <div style={styles.min.label}>MINIMALIST — &quot;Stark&quot;</div>}
         </div>
@@ -307,77 +388,105 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
 // Minimalist + accent line + static keyword balls on title
 // ============================================
 
-export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?: string }> = ({ slide, accentColor, logoUrl }) => {
-    // Static ball positions for title slide
-    const ballPositions = [
-        { x: 480, y: 100 },
-        { x: 580, y: 180 },
-        { x: 650, y: 280 },
-        { x: 520, y: 320 },
-        { x: 420, y: 220 },
-    ];
+export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?: string; onEdit?: (field: string, value: any) => void }> = ({ slide, accentColor, logoUrl, onEdit }) => {
+    const handleEdit = (field: string, value: string) => {
+        if (onEdit) onEdit(field, value);
+    };
 
     switch (slide.type) {
         case 'title':
             return (
                 <div style={styles.hyb.titleSlide}>
+                    {/* Decorative Circle */}
+                    <div style={{
+                        position: 'absolute',
+                        top: -100,
+                        right: -100,
+                        width: 400,
+                        height: 400,
+                        borderRadius: '50%',
+                        background: accentColor,
+                        opacity: 0.1,
+                        zIndex: 0,
+                    }} />
+
                     <div style={styles.hyb.titleContent}>
                         {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 32, marginBottom: 24 }} />}
-                        <h1 style={styles.hyb.titleMain}>{slide.title}</h1>
-                        <p style={styles.hyb.titleSub}>{slide.subtitle}</p>
+                        <EditableText
+                            tagName="h1"
+                            style={styles.hyb.titleMain}
+                            value={slide.title || ''}
+                            onChange={(val) => handleEdit('title', val)}
+                        />
+                        <div style={{ width: 60, height: 4, background: accentColor, marginTop: 30 }} />
+                        <EditableText
+                            tagName="p"
+                            style={styles.hyb.titleSub}
+                            value={slide.subtitle || ''}
+                            onChange={(val) => handleEdit('subtitle', val)}
+                        />
                     </div>
-                    {slide.keywords && slide.keywords.map((word, i) => {
-                        const pos = ballPositions[i % ballPositions.length];
-                        const size = 80 + word.length * 2;
-                        return (
-                            <div
-                                key={i}
-                                style={{
-                                    position: 'absolute',
-                                    left: pos.x,
-                                    top: pos.y,
-                                    width: size,
-                                    height: size,
-                                    borderRadius: '50%',
-                                    border: `1.5px solid ${accentColor}`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    background: '#fff',
-                                    fontSize: 12,
-                                    fontWeight: 500,
-                                    color: accentColor,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                }}
-                            >
-                                {word}
-                            </div>
-                        );
-                    })}
                 </div>
             );
         case 'statement':
             return (
                 <div style={styles.hyb.statementSlide}>
-                    <p style={styles.hyb.statementText}>{slide.text}</p>
+                    <EditableText
+                        tagName="p"
+                        style={styles.hyb.statementText}
+                        value={slide.text || ''}
+                        onChange={(val) => handleEdit('text', val)}
+                    />
                 </div>
             );
         case 'two-column':
             return (
                 <div style={styles.hyb.twoColSlide}>
-                    <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
+                    <EditableText
+                        tagName="h2"
+                        style={{ ...styles.hyb.twoColTitle, color: accentColor }}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
                     <div style={styles.hyb.twoColContainer}>
                         <div style={styles.hyb.column}>
+                            <span style={{ ...styles.hyb.columnLabel, color: accentColor }}>Key Points</span>
                             {Array.isArray(slide.left) && slide.left.map((item, i) => (
-                                <p key={i} style={styles.hyb.columnItem}>{item}</p>
+                                <EditableText
+                                    key={i}
+                                    tagName="p"
+                                    style={styles.hyb.columnItem}
+                                    value={item}
+                                    onChange={(val) => {
+                                        const newLeft = [...(slide.left as string[])];
+                                        newLeft[i] = val;
+                                        handleEdit('left', newLeft as any);
+                                    }}
+                                />
                             ))}
+                            {!Array.isArray(slide.left) && typeof slide.left === 'string' && (
+                                <img src={slide.left} alt="Left content" style={{ maxWidth: '100%', borderRadius: 8 }} />
+                            )}
                         </div>
-                        <div style={{ ...styles.hyb.columnDivider, background: accentColor, opacity: 0.3 }} />
+                        <div style={{ ...styles.hyb.columnDivider, background: accentColor }} />
                         <div style={styles.hyb.column}>
+                            <span style={{ ...styles.hyb.columnLabel, color: accentColor }}>Details</span>
                             {Array.isArray(slide.right) && slide.right.map((item, i) => (
-                                <p key={i} style={styles.hyb.columnItem}>{item}</p>
+                                <EditableText
+                                    key={i}
+                                    tagName="p"
+                                    style={styles.hyb.columnItem}
+                                    value={item}
+                                    onChange={(val) => {
+                                        const newRight = [...(slide.right as string[])];
+                                        newRight[i] = val;
+                                        handleEdit('right', newRight as any);
+                                    }}
+                                />
                             ))}
+                            {!Array.isArray(slide.right) && typeof slide.right === 'string' && (
+                                <img src={slide.right} alt="Right content" style={{ maxWidth: '100%', borderRadius: 8 }} />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -385,59 +494,93 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
         case 'quote':
             return (
                 <div style={styles.hyb.quoteSlide}>
-                    <p style={styles.hyb.quoteText}>&quot;{slide.text}&quot;</p>
-                    <p style={{ ...styles.hyb.quoteAuthor, color: accentColor }}>— {slide.author}</p>
+                    <div style={{ fontSize: 60, color: accentColor, lineHeight: 0.5, marginBottom: 20 }}>“</div>
+                    <EditableText
+                        tagName="p"
+                        style={styles.hyb.quoteText}
+                        value={slide.text || ''}
+                        onChange={(val) => handleEdit('text', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={{ ...styles.hyb.quoteAuthor, color: accentColor }}
+                        value={`— ${slide.author}`}
+                        onChange={(val) => handleEdit('author', val.replace(/^—\s*/, ''))}
+                    />
                 </div>
             );
         case 'end':
             return (
                 <div style={styles.hyb.endSlide}>
-                    <p style={styles.hyb.endText}>{slide.text || slide.title}</p>
+                    <EditableText
+                        tagName="p"
+                        style={styles.hyb.endText}
+                        value={slide.text || slide.title || ''}
+                        onChange={(val) => handleEdit(slide.text ? 'text' : 'title', val)}
+                    />
+                    <div style={{ width: 80, height: 4, background: accentColor, margin: '30px auto' }} />
                 </div>
             );
         default:
             return (
                 <div style={styles.hyb.statementSlide}>
-                    <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
-                    <p style={styles.hyb.statementText}>{slide.text || slide.detail}</p>
+                    <EditableText
+                        tagName="h2"
+                        style={{ ...styles.hyb.twoColTitle, color: accentColor }}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={styles.hyb.statementText}
+                        value={slide.text || slide.detail || ''}
+                        onChange={(val) => handleEdit(slide.text ? 'text' : 'detail', val)}
+                    />
                 </div>
             );
     }
 };
 
-export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = '#4A9B8C', logoUrl, isFullscreen }) => {
+export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, accentColor = '#0052CC', isFullscreen, onEdit, onAdd, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
-
-    // Static ball positions for title slide
-    const ballPositions = [
-        { x: 480, y: 100 },
-        { x: 580, y: 180 },
-        { x: 650, y: 280 },
-        { x: 520, y: 320 },
-        { x: 420, y: 220 },
-    ];
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
     const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
+    // Ensure currentSlide is valid if slides are deleted
+    useEffect(() => {
+        if (currentSlide >= slides.length && slides.length > 0) {
+            setCurrentSlide(slides.length - 1);
+        }
+    }, [slides.length, currentSlide]);
+
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
+            if (document.activeElement === document.body) {
+                if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [slides.length, nextSlide, prevSlide]);
 
-    const slide = slides[currentSlide];
-
     const renderSlide = () => {
-        return <HybridSlide slide={slide} accentColor={accentColor} logoUrl={logoUrl} />;
+        const slide = slides[currentSlide];
+        if (!slide) return null;
+        return <HybridSlide
+            slide={slide}
+            accentColor={accentColor}
+            onEdit={(field, val) => onEdit && onEdit(currentSlide, field, val)}
+        />;
     };
 
+    if (slides.length === 0) return <div style={{ color: '#666' }}>No slides</div>;
+
     return (
-        <div style={styles.hyb.container}>
+        <div style={styles.hyb.container} className="slide-container">
+            <GlobalStyles />
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 16 }}>
                 {/* Accent line on far left */}
                 <div style={{
@@ -453,8 +596,60 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
                     {renderSlide()}
                 </div>
 
+                {/* Slide Management Buttons */}
+                {!isFullscreen && (
+                    <>
+                        <button
+                            className="slide-action-btn"
+                            onClick={() => onDelete && onDelete(currentSlide)}
+                            style={{
+                                position: 'absolute',
+                                top: 20,
+                                right: 20,
+                                background: '#FF6B6B',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 32,
+                                height: 32,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                                zIndex: 100,
+                            }}
+                            title="Delete Slide"
+                        >
+                            🗑️
+                        </button>
+                    </>
+                )}
+
                 <div style={styles.hyb.nav}>
                     <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
+                    {!isFullscreen && onAdd && (
+                        <button
+                            onClick={() => onAdd(currentSlide)}
+                            style={{
+                                background: accentColor,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                                marginLeft: 10,
+                            }}
+                            title="Add Slide"
+                        >
+                            +
+                        </button>
+                    )}
                 </div>
                 {!isFullscreen && <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>}
             </div>
@@ -486,295 +681,300 @@ const colors = {
     magenta: '#E500A4',
 };
 
-export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; isStatic?: boolean }> = ({ slide, logoUrl, isStatic = false }) => {
-    const [shapes, setShapes] = useState<Shape[]>([]);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const animationRef = useRef<number>(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dragRef = useRef<any>(null);
-
-    // Colors moved outside or memoized
-    const colorArray = useMemo(() => Object.values(colors), []);
-
-    // Initialize shapes for current slide
-    useEffect(() => {
-        const shapeConfigs = [
-            // Varied shapes per slide type
-            { count: 8, sizeRange: [40, 120] },
-        ];
-
-        const config = shapeConfigs[0];
-        const newShapes = [];
-
-        for (let i = 0; i < config.count; i++) {
-            const size = config.sizeRange[0] + Math.random() * (config.sizeRange[1] - config.sizeRange[0]);
-            const isCircle = Math.random() > 0.3;
-
-            newShapes.push({
-                id: i,
-                x: 50 + Math.random() * 650,
-                y: 50 + Math.random() * 300,
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2,
-                size,
-                color: colorArray[i % colorArray.length],
-                isCircle,
-                rotation: Math.random() * 30 - 15,
-                floatPhase: Math.random() * Math.PI * 2,
-                floatSpeed: 0.015 + Math.random() * 0.015,
-                dragging: false,
-            });
-        }
-
-        setShapes(newShapes);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slide]); // Re-init on slide change
-
-    // Physics animation loop (antigravity mode always on)
-    useEffect(() => {
-        if (isStatic) return;
-
-        const width = 960;
-        const height = 540;
-        const bounce = 0.7;
-
-        const animate = () => {
-            setShapes(prevShapes => {
-                return prevShapes.map(shape => {
-                    if (shape.dragging) return shape;
-
-                    const { size, floatSpeed } = shape;
-                    let { x, y, vx, vy, floatPhase } = shape;
-
-                    // Antigravity float
-                    floatPhase += floatSpeed;
-                    const floatForceX = Math.sin(floatPhase) * 0.03;
-                    const floatForceY = Math.cos(floatPhase * 0.7) * 0.03;
-
-                    vy -= 0.01; // Slight upward drift
-                    vx += floatForceX;
-                    vy += floatForceY;
-                    vx *= 0.995;
-                    vy *= 0.995;
-
-                    x += vx;
-                    y += vy;
-
-                    // Boundary collisions
-                    if (x < 0) { x = 0; vx *= -bounce; }
-                    if (x + size > width) { x = width - size; vx *= -bounce; }
-                    if (y < 0) { y = 0; vy *= -bounce; }
-                    if (y + size > height) { y = height - size; vy *= -bounce; }
-
-                    return { ...shape, x, y, vx, vy, floatPhase };
-                });
-            });
-
-            animationRef.current = requestAnimationFrame(animate);
-        };
-
-        animationRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(animationRef.current);
-    }, [slide, isStatic]);
-
-    // Drag handlers
-    const handleMouseDown = useCallback((e: React.MouseEvent, shapeId: number) => {
-        if (isStatic) return;
-        e.preventDefault();
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const shape = shapes.find(s => s.id === shapeId);
-        if (!shape) return;
-
-        dragRef.current = {
-            shapeId,
-            offsetX: e.clientX - rect.left - shape.x,
-            offsetY: e.clientY - rect.top - shape.y,
-        };
-
-        setShapes(prev => prev.map(s =>
-            s.id === shapeId ? { ...s, dragging: true, vx: 0, vy: 0 } : s
-        ));
-    }, [shapes, isStatic]);
-
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (isStatic) return;
-        if (!dragRef.current || !containerRef.current) return;
-
-        const rect = containerRef.current.getBoundingClientRect();
-        const newX = e.clientX - rect.left - dragRef.current.offsetX;
-        const newY = e.clientY - rect.top - dragRef.current.offsetY;
-
-        setShapes(prev => prev.map(s => {
-            if (s.id === dragRef.current.shapeId) {
-                const vx = newX - s.x;
-                const vy = newY - s.y;
-                return { ...s, x: newX, y: newY, vx, vy };
-            }
-            return s;
-        }));
-    }, [isStatic]);
-
-    const handleMouseUp = useCallback(() => {
-        if (isStatic) return;
-        if (!dragRef.current) return;
-
-        setShapes(prev => prev.map(s =>
-            s.id === dragRef.current.shapeId ? { ...s, dragging: false } : s
-        ));
-
-        dragRef.current = null;
-    }, [isStatic]);
-
-    useEffect(() => {
-        if (isStatic) return;
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [handleMouseMove, handleMouseUp, isStatic]);
-
-    const renderContent = () => {
-        switch (slide.type) {
-            case 'title':
-                return (
-                    <div style={styles.max.titleContent}>
-                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 50, marginBottom: 20 }} />}
-                        <h1 style={styles.max.titleMain}>{slide.title}</h1>
-                        <p style={styles.max.titleSub}>{slide.subtitle}</p>
-                    </div>
-                );
-            case 'big-number':
-                return (
-                    <div style={styles.max.bigNumContent}>
-                        <span style={{ ...styles.max.bigNum, background: `linear-gradient(135deg, ${colors.pink}, ${colors.orange}, ${colors.yellow})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{slide.number}</span>
-                        <h2 style={styles.max.bigNumLabel}>{slide.label}</h2>
-                        <p style={styles.max.bigNumDetail}>{slide.detail}</p>
-                    </div>
-                );
-            case 'grid':
-                return (
-                    <div style={styles.max.gridContent}>
-                        <h2 style={styles.max.gridTitle}>{slide.title}</h2>
-                        <div style={styles.max.gridContainer}>
-                            {slide.items && slide.items.map((item, i) => {
-                                const itemColors = [colors.pink, colors.blue, colors.yellow, colors.green, colors.purple, colors.orange];
-                                const textColors = ['#fff', '#fff', '#000', '#fff', '#fff', '#fff'];
-                                return (
-                                    <div key={i} style={{ ...styles.max.gridItem, background: itemColors[i % itemColors.length], color: textColors[i % textColors.length] }}>
-                                        <span style={styles.max.gridIcon}>{item.icon}</span>
-                                        <span style={styles.max.gridLabel}>{item.label}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            case 'split':
-                const left = slide.left as { title: string; value: string; label: string };
-                const right = slide.right as { title: string; value: string; label: string };
-                return (
-                    <div style={styles.max.splitContent}>
-                        <div style={{ ...styles.max.splitHalf, background: colors.coral }}>
-                            <span style={styles.max.splitTitle}>{left?.title}</span>
-                            <span style={styles.max.splitValue}>{left?.value}</span>
-                            <span style={styles.max.splitLabel}>{left?.label}</span>
-                        </div>
-                        <div style={styles.max.splitDivider}>
-                            <div style={{ ...styles.max.splitArrowCircle, background: colors.yellow }}>→</div>
-                        </div>
-                        <div style={{ ...styles.max.splitHalf, background: colors.green }}>
-                            <span style={styles.max.splitTitle}>{right?.title}</span>
-                            <span style={styles.max.splitValue}>{right?.value}</span>
-                            <span style={styles.max.splitLabel}>{right?.label}</span>
-                        </div>
-                    </div>
-                );
-            case 'end':
-                return (
-                    <div style={styles.max.endContent}>
-                        <h1 style={styles.max.endTitle}>{slide.title || slide.text}</h1>
-                        {slide.cta && <button style={{ ...styles.max.ctaBtn, background: colors.pink }}>{slide.cta}</button>}
-                    </div>
-                );
-            default:
-                // Fallback
-                return (
-                    <div style={styles.max.titleContent}>
-                        <h1 style={styles.max.titleMain}>{slide.title}</h1>
-                        <p style={styles.max.titleSub}>{slide.text || slide.subtitle}</p>
-                    </div>
-                );
-        }
+export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?: (field: string, value: any) => void }> = ({ slide, logoUrl, onEdit }) => {
+    const handleEdit = (field: string, value: any) => {
+        if (onEdit) onEdit(field, value);
     };
 
-    return (
-        <div
-            ref={containerRef}
-            style={styles.max.slideContainer}
-        >
-            {/* Physics shapes layer */}
-            {shapes.map((shape) => (
-                <div
-                    key={shape.id}
-                    onMouseDown={(e) => handleMouseDown(e, shape.id)}
-                    style={{
-                        position: 'absolute',
-                        left: shape.x,
-                        top: shape.y,
-                        width: shape.size,
-                        height: shape.size,
-                        borderRadius: shape.isCircle ? '50%' : shape.size * 0.2,
-                        background: shape.color,
-                        transform: `rotate(${shape.rotation}deg)`,
-                        cursor: shape.dragging ? 'grabbing' : 'grab',
-                        transition: shape.dragging ? 'none' : 'box-shadow 0.2s',
-                        boxShadow: shape.dragging
-                            ? `0 12px 40px ${shape.color}50`
-                            : `0 6px 24px ${shape.color}30`,
-                        zIndex: shape.dragging ? 100 : 1,
-                        userSelect: 'none',
-                    }}
-                />
-            ))}
+    const colors = {
+        pink: '#FF90E8',
+        yellow: '#FFC900',
+        cyan: '#23A094',
+        blue: '#0090FF',
+        green: '#B5E48C'
+    };
 
-            {/* Content layer */}
-            <div style={styles.max.contentLayer}>
-                {renderContent()}
-            </div>
-        </div>
-    );
+    switch (slide.type) {
+        case 'title':
+            return (
+                <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                    <div style={styles.max.titleContent}>
+                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 60, marginBottom: 30 }} />}
+                        <EditableText
+                            tagName="h1"
+                            style={styles.max.titleMain}
+                            value={slide.title || ''}
+                            onChange={(val) => handleEdit('title', val)}
+                        />
+                        <EditableText
+                            tagName="p"
+                            style={styles.max.titleSub}
+                            value={slide.subtitle || ''}
+                            onChange={(val) => handleEdit('subtitle', val)}
+                        />
+                    </div>
+                </div>
+            );
+        case 'big-number':
+            return (
+                <div style={{ ...styles.max.contentLayer, background: colors.pink }}>
+                    <div style={styles.max.bigNumContent}>
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.bigNum}
+                            value={slide.number || ''}
+                            onChange={(val) => handleEdit('number', val)}
+                        />
+                        <EditableText
+                            tagName="h3"
+                            style={styles.max.bigNumLabel}
+                            value={slide.label || ''}
+                            onChange={(val) => handleEdit('label', val)}
+                        />
+                        <EditableText
+                            tagName="p"
+                            style={styles.max.bigNumDetail}
+                            value={slide.detail || ''}
+                            onChange={(val) => handleEdit('detail', val)}
+                        />
+                    </div>
+                </div>
+            );
+        case 'grid':
+            return (
+                <div style={{ ...styles.max.contentLayer, background: '#fff' }}>
+                    <div style={styles.max.gridContent}>
+                        <EditableText
+                            tagName="h2"
+                            style={styles.max.gridTitle}
+                            value={slide.title || ''}
+                            onChange={(val) => handleEdit('title', val)}
+                        />
+                        <div style={styles.max.gridContainer}>
+                            {slide.items?.map((item, i) => (
+                                <div key={i} style={{ ...styles.max.gridItem, background: [colors.pink, colors.yellow, colors.cyan, colors.green][i % 4] }}>
+                                    <span style={styles.max.gridIcon}>
+                                        {/* Check if icon is an image URL (placeholder replacement) */}
+                                        {item.icon && (item.icon.startsWith('http') || item.icon.startsWith('blob')) ? (
+                                            <img src={item.icon} alt="icon" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+                                        ) : (
+                                            item.icon
+                                        )}
+                                    </span>
+                                    <EditableText
+                                        tagName="span"
+                                        style={styles.max.gridLabel}
+                                        value={item.label}
+                                        onChange={(val) => {
+                                            const newItems = [...(slide.items || [])];
+                                            newItems[i] = { ...newItems[i], label: val };
+                                            handleEdit('items', newItems as any);
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'split':
+            const leftData = slide.left as { title: string; value: string; label: string } | undefined;
+            const rightData = slide.right as { title: string; value: string; label: string } | undefined;
+            return (
+                <div style={styles.max.splitContent}>
+                    <div style={{ ...styles.max.splitHalf, background: colors.blue }}>
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitTitle}
+                            value={leftData?.title || ''}
+                            onChange={(val) => handleEdit('left', { ...leftData, title: val })}
+                        />
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitValue}
+                            value={leftData?.value || ''}
+                            onChange={(val) => handleEdit('left', { ...leftData, value: val })}
+                        />
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitLabel}
+                            value={leftData?.label || ''}
+                            onChange={(val) => handleEdit('left', { ...leftData, label: val })}
+                        />
+                    </div>
+                    <div style={styles.max.splitDivider}>
+                        <div style={{ ...styles.max.splitArrowCircle, background: colors.yellow }}>VS</div>
+                    </div>
+                    <div style={{ ...styles.max.splitHalf, background: '#1a1a1a' }}>
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitTitle}
+                            value={rightData?.title || ''}
+                            onChange={(val) => handleEdit('right', { ...rightData, title: val })}
+                        />
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitValue}
+                            value={rightData?.value || ''}
+                            onChange={(val) => handleEdit('right', { ...rightData, value: val })}
+                        />
+                        <EditableText
+                            tagName="span"
+                            style={styles.max.splitLabel}
+                            value={rightData?.label || ''}
+                            onChange={(val) => handleEdit('right', { ...rightData, label: val })}
+                        />
+                    </div>
+                </div>
+            );
+        case 'end':
+            return (
+                <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
+                    <div style={styles.max.endContent}>
+                        <EditableText
+                            tagName="h1"
+                            style={styles.max.endTitle}
+                            value={slide.title || ''}
+                            onChange={(val) => handleEdit('title', val)}
+                        />
+                        <button style={{ ...styles.max.ctaBtn, background: '#1a1a1a' }}>
+                            <EditableText
+                                tagName="span"
+                                value={slide.cta || 'Contact Us'}
+                                onChange={(val) => handleEdit('cta', val)}
+                            />
+                        </button>
+                    </div>
+                </div>
+            );
+        default:
+            return (
+                <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                    <div style={styles.max.titleContent}>
+                        <EditableText
+                            tagName="h1"
+                            style={styles.max.titleMain}
+                            value={slide.title || ''}
+                            onChange={(val) => handleEdit('title', val)}
+                        />
+                        <EditableText
+                            tagName="p"
+                            style={styles.max.titleSub}
+                            value={slide.text || ''}
+                            onChange={(val) => handleEdit('text', val)}
+                        />
+                    </div>
+                </div>
+            );
+    }
 };
 
-export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, isFullscreen }) => {
+export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
     const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
+    // Ensure currentSlide is valid if slides are deleted
+    useEffect(() => {
+        if (currentSlide >= slides.length && slides.length > 0) {
+            setCurrentSlide(slides.length - 1);
+        }
+    }, [slides.length, currentSlide]);
+
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
+            if (document.activeElement === document.body) {
+                if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [slides.length, nextSlide, prevSlide]);
 
-    const slide = slides[currentSlide];
+    const colors = {
+        pink: '#FF90E8',
+        yellow: '#FFC900',
+        cyan: '#23A094',
+        blue: '#0090FF',
+        green: '#B5E48C'
+    };
+
+    const renderSlide = (slide: Slide) => {
+        if (!slide) return null;
+        return <MaximalistSlide
+            slide={slide}
+            logoUrl={logoUrl}
+            onEdit={(field, val) => onEdit && onEdit(currentSlide, field, val)}
+        />;
+    };
+
+    if (slides.length === 0) return <div style={{ color: '#666' }}>No slides</div>;
 
     return (
-        <div style={styles.max.container}>
+        <div style={styles.max.container} className="slide-container">
+            <GlobalStyles />
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 16 }}>
                 <div style={styles.max.slideContainer}>
-                    <MaximalistSlide slide={slide} logoUrl={logoUrl} />
+                    {renderSlide(slides[currentSlide])}
                 </div>
+
+                {/* Slide Management Buttons */}
+                {!isFullscreen && (
+                    <>
+                        <button
+                            className="slide-action-btn"
+                            onClick={() => onDelete && onDelete(currentSlide)}
+                            style={{
+                                position: 'absolute',
+                                top: 20,
+                                right: 20,
+                                background: '#FF6B6B',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 32,
+                                height: 32,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                                zIndex: 100,
+                            }}
+                            title="Delete Slide"
+                        >
+                            🗑️
+                        </button>
+                    </>
+                )}
 
                 <div style={styles.max.nav}>
                     <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1} / {slides.length}</span>
+                    {!isFullscreen && onAdd && (
+                        <button
+                            onClick={() => onAdd(currentSlide)}
+                            style={{
+                                background: '#1a1a1a',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                                marginLeft: 10,
+                            }}
+                            title="Add Slide"
+                        >
+                            +
+                        </button>
+                    )}
                 </div>
                 {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
             </div>

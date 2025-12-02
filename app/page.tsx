@@ -241,6 +241,23 @@ export default function Home() {
     setPresentation({ ...presentation, slides: newSlides });
   };
 
+  const handleAddSlide = (index: number) => {
+    if (!presentation) return;
+    const newSlide: any = {
+      type: 'statement',
+      text: 'New Slide',
+    };
+    const newSlides = [...presentation.slides];
+    newSlides.splice(index + 1, 0, newSlide);
+    setPresentation({ ...presentation, slides: newSlides });
+  };
+
+  const handleDeleteSlide = (index: number) => {
+    if (!presentation) return;
+    const newSlides = presentation.slides.filter((_, i) => i !== index);
+    setPresentation({ ...presentation, slides: newSlides });
+  };
+
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -652,13 +669,32 @@ export default function Home() {
               <div className={styles.viewerWrapper}>
                 {selectedTemplate === 'minimalist' && (
                   // @ts-ignore
-                  <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} onEdit={handleSlideEdit} />
+                  <MinimalistTemplate
+                    slides={presentation.slides}
+                    logoUrl={logo || undefined}
+                    onEdit={handleSlideEdit}
+                    onAdd={handleAddSlide}
+                    onDelete={handleDeleteSlide}
+                  />
                 )}
                 {selectedTemplate === 'hybrid' && (
-                  <HybridTemplate slides={presentation.slides} accentColor={accentColor} logoUrl={logo || undefined} />
+                  <HybridTemplate
+                    slides={presentation.slides}
+                    accentColor={accentColor}
+                    logoUrl={logo || undefined}
+                    onEdit={handleSlideEdit}
+                    onAdd={handleAddSlide}
+                    onDelete={handleDeleteSlide}
+                  />
                 )}
                 {selectedTemplate === 'maximalist' && (
-                  <MaximalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                  <MaximalistTemplate
+                    slides={presentation.slides}
+                    logoUrl={logo || undefined}
+                    onEdit={handleSlideEdit}
+                    onAdd={handleAddSlide}
+                    onDelete={handleDeleteSlide}
+                  />
                 )}
               </div>
 
@@ -678,7 +714,7 @@ export default function Home() {
                       </div>
                     )}
                     {selectedTemplate === 'maximalist' && (
-                      <MaximalistSlide slide={slide} logoUrl={logo || undefined} isStatic={true} />
+                      <MaximalistSlide slide={slide} logoUrl={logo || undefined} />
                     )}
                   </div>
                 ))}
