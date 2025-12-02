@@ -683,15 +683,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
 }
 
-.headerLeft h2 {
+.presentationTitleWrapper {
+  margin-bottom: 16px;
+}
+
+.presentationTitleWrapper h2 {
   font-size: 2rem;
   font-weight: 800;
-  margin: 8px 0 0;
+  margin: 0;
   color: #1a1a1a;
 }
+
+
 
 .backLink {
   background: none;

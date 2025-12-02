@@ -643,7 +643,6 @@ export default function Home() {
               <div className={styles.presentationHeader}>
                 <div className={styles.headerLeft}>
                   <button onClick={() => setStep('input')} className={styles.backLink}>← Create New</button>
-                  <h2>{presentation.title}</h2>
                 </div>
 
                 <div className={styles.headerRight}>
@@ -683,6 +682,10 @@ export default function Home() {
                     </select>
                   </div>
                 </div>
+              </div>
+
+              <div className={styles.presentationTitleWrapper}>
+                <h2>{presentation.title}</h2>
               </div>
 
               {isFullscreen && (
