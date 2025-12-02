@@ -1,13 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Nouri Color Palette */
+  --bg-color: #fafafa;
+  --text-color: #1a1a1a;
+  --text-muted: #666;
+  --surface-color: #f0f0f0;
+  --accent-color: #4A9B8C;
+  /* Calming teal */
+  --accent-light: #6BB5A6;
+
+  /* Ball Colors */
+  --mood-color: #7C9BE4;
+  --energy-color: #E4B07C;
+  --sleep-color: #9B7CE4;
+  --gut-color: #7CE4A9;
+
+  /* Mappings for existing components */
+  --bg-primary: var(--bg-color);
+  --bg-secondary: var(--surface-color);
+  --bg-card: #ffffff;
+  --text-primary: var(--text-color);
+  --text-secondary: var(--text-muted);
+  --primary-purple: var(--accent-color);
+  /* Mapping main action color */
+  --bg-gradient: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-light) 100%);
+
+  --border-color: rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark Mode Adaptation */
+    --bg-color: #1a1a1a;
+    --text-color: #fafafa;
+    --text-muted: #a0a0a0;
+    --surface-color: #2a2a2a;
+
+    --bg-primary: var(--bg-color);
+    --bg-secondary: var(--surface-color);
+    --bg-card: #2a2a2a;
+
+    --text-primary: var(--text-color);
+    --text-secondary: var(--text-muted);
+
+    --border-color: rgba(255, 255, 255, 0.1);
   }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html,
@@ -17,22 +65,99 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+/* Smooth Transitions */
+a,
+button,
+input,
+textarea {
+  transition: all 0.2s ease-in-out;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Utility Classes */
+.gradient-text {
+  background: var(--bg-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 @media (prefers-color-scheme: dark) {
