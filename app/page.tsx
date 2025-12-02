@@ -259,6 +259,19 @@ export default function Home() {
     setPresentation({ ...presentation, slides: newSlides });
   };
 
+  const handleAddImageSlide = (index: number, file: File) => {
+    if (!presentation) return;
+    const imageUrl = URL.createObjectURL(file);
+    const newSlide: any = {
+      type: 'image',
+      image: imageUrl,
+      caption: 'Click to add caption...',
+    };
+    const newSlides = [...presentation.slides];
+    newSlides.splice(index + 1, 0, newSlide);
+    setPresentation({ ...presentation, slides: newSlides });
+  };
+
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -675,6 +688,7 @@ export default function Home() {
                     logoUrl={logo || undefined}
                     onEdit={handleSlideEdit}
                     onAdd={handleAddSlide}
+                    onAddImage={handleAddImageSlide}
                     onDelete={handleDeleteSlide}
                   />
                 )}
@@ -685,6 +699,7 @@ export default function Home() {
                     logoUrl={logo || undefined}
                     onEdit={handleSlideEdit}
                     onAdd={handleAddSlide}
+                    onAddImage={handleAddImageSlide}
                     onDelete={handleDeleteSlide}
                   />
                 )}
@@ -694,6 +709,7 @@ export default function Home() {
                     logoUrl={logo || undefined}
                     onEdit={handleSlideEdit}
                     onAdd={handleAddSlide}
+                    onAddImage={handleAddImageSlide}
                     onDelete={handleDeleteSlide}
                   />
                 )}

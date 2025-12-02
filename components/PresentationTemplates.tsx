@@ -5,12 +5,15 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 // ============================================
 
 export interface Slide {
-    type: 'title' | 'statement' | 'two-column' | 'quote' | 'end' | 'big-number' | 'grid' | 'split' | 'content';
+    type: 'title' | 'statement' | 'two-column' | 'quote' | 'end' | 'big-number' | 'grid' | 'split' | 'content' | 'image';
     title?: string;
     subtitle?: string;
     text?: string;
     author?: string;
     keywords?: string[];
+    // Image
+    image?: string;
+    caption?: string;
     // Two-column / Split
     left?: string[] | { title: string; value: string; label: string };
     right?: string[] | { title: string; value: string; label: string };
@@ -35,6 +38,7 @@ interface TemplateProps {
     logoUrl?: string;
     isFullscreen?: boolean;
     onAdd?: (index: number) => void;
+    onAddImage?: (index: number, file: File) => void;
     onDelete?: (index: number) => void;
 }
 
@@ -189,6 +193,30 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                     />
                 </div>
             );
+        case 'image':
+            return (
+                <div style={styles.min.imageSlide}>
+                    {slide.image && (
+                        <img
+                            src={slide.image}
+                            alt="Slide"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: slide.caption ? '80%' : '100%',
+                                objectFit: 'contain',
+                                borderRadius: 8,
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                            }}
+                        />
+                    )}
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.imageCaption}
+                        value={slide.caption || ''}
+                        onChange={(val) => handleEdit('caption', val)}
+                    />
+                </div>
+            );
         case 'two-column':
             return (
                 <div style={styles.min.twoColSlide}>
@@ -290,7 +318,7 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     }
 };
 
-export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onDelete }) => {
+export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onAddImage, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -403,6 +431,38 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
                         +
                     </button>
                 )}
+                {!isFullscreen && onAddImage && (
+                    <label
+                        style={{
+                            background: '#4A9B8C',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 14,
+                            marginLeft: 10,
+                        }}
+                        title="Add Image Slide"
+                    >
+                        📷
+                        <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                                if (e.target.files?.[0] && onAddImage) {
+                                    onAddImage(currentSlide, e.target.files[0]);
+                                    e.target.value = '';
+                                }
+                            }}
+                        />
+                    </label>
+                )}
             </div>
             {!isFullscreen && <div style={styles.min.label}>MINIMALIST — &quot;Stark&quot;</div>}
         </div>
@@ -479,6 +539,31 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={styles.hyb.contentText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                    />
+                </div>
+            );
+        case 'image':
+            return (
+                <div style={styles.hyb.imageSlide}>
+                    {slide.image && (
+                        <img
+                            src={slide.image}
+                            alt="Slide"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: slide.caption ? '80%' : '100%',
+                                objectFit: 'contain',
+                                borderRadius: 8,
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                                border: `4px solid ${accentColor}`
+                            }}
+                        />
+                    )}
+                    <EditableText
+                        tagName="p"
+                        style={{ ...styles.hyb.imageCaption, color: accentColor }}
+                        value={slide.caption || ''}
+                        onChange={(val) => handleEdit('caption', val)}
                     />
                 </div>
             );
@@ -584,7 +669,7 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
     }
 };
 
-export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, accentColor = '#0052CC', isFullscreen, onEdit, onAdd, onDelete }) => {
+export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, accentColor = '#0052CC', isFullscreen, onEdit, onAdd, onAddImage, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -701,6 +786,38 @@ export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: nu
                         >
                             +
                         </button>
+                    )}
+                    {!isFullscreen && onAddImage && (
+                        <label
+                            style={{
+                                background: accentColor,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 14,
+                                marginLeft: 10,
+                            }}
+                            title="Add Image Slide"
+                        >
+                            📷
+                            <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                    if (e.target.files?.[0] && onAddImage) {
+                                        onAddImage(currentSlide, e.target.files[0]);
+                                        e.target.value = '';
+                                    }
+                                }}
+                            />
+                        </label>
                     )}
                 </div>
                 {!isFullscreen && <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>}
@@ -979,6 +1096,34 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         </div>
                     </div>
                 );
+            case 'image':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.purple }}>
+                        <div style={styles.max.imageSlide}>
+                            {slide.image && (
+                                <img
+                                    src={slide.image}
+                                    alt="Slide"
+                                    style={{
+                                        maxWidth: '100%',
+                                        maxHeight: slide.caption ? '80%' : '100%',
+                                        objectFit: 'contain',
+                                        borderRadius: 16,
+                                        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                                        transform: 'rotate(-2deg)',
+                                        border: '8px solid #fff'
+                                    }}
+                                />
+                            )}
+                            <EditableText
+                                tagName="p"
+                                style={styles.max.imageCaption}
+                                value={slide.caption || ''}
+                                onChange={(val) => handleEdit('caption', val)}
+                            />
+                        </div>
+                    </div>
+                );
             case 'end':
                 return (
                     <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
@@ -1051,7 +1196,7 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     );
 };
 
-export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onDelete }) => {
+export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onAddImage, onDelete }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -1165,6 +1310,38 @@ export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
                         >
                             +
                         </button>
+                    )}
+                    {!isFullscreen && onAddImage && (
+                        <label
+                            style={{
+                                background: '#1a1a1a',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 14,
+                                marginLeft: 10,
+                            }}
+                            title="Add Image Slide"
+                        >
+                            📷
+                            <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                    if (e.target.files?.[0] && onAddImage) {
+                                        onAddImage(currentSlide, e.target.files[0]);
+                                        e.target.value = '';
+                                    }
+                                }}
+                            />
+                        </label>
                     )}
                 </div>
                 {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
@@ -1330,6 +1507,23 @@ const styles: Record<string, any> = {
             fontWeight: 700,
             color: '#1a1a1a',
             margin: 0,
+        },
+        imageSlide: {
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 40,
+            boxSizing: 'border-box',
+        },
+        imageCaption: {
+            marginTop: 20,
+            fontSize: 18,
+            color: '#666',
+            textAlign: 'center',
+            fontStyle: 'italic',
         },
         nav: {
             position: 'absolute',
@@ -1535,6 +1729,22 @@ const styles: Record<string, any> = {
             fontWeight: 700,
             color: '#1a1a1a',
             margin: 0,
+        },
+        imageSlide: {
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 40,
+            boxSizing: 'border-box',
+        },
+        imageCaption: {
+            marginTop: 20,
+            fontSize: 18,
+            textAlign: 'center',
+            fontStyle: 'italic',
         },
         nav: {
             position: 'absolute',
@@ -1756,20 +1966,45 @@ const styles: Record<string, any> = {
             pointerEvents: 'auto',
         },
         endTitle: {
-            fontSize: 44,
-            color: '#1a1a1a',
+            fontSize: 64,
             fontWeight: 800,
-            marginBottom: 28,
+            color: '#1a1a1a',
+            marginBottom: 40,
+            letterSpacing: '-0.03em',
+        },
+        imageSlide: {
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 40,
+            boxSizing: 'border-box',
+            zIndex: 2,
+            position: 'relative',
+        },
+        imageCaption: {
+            marginTop: 20,
+            fontSize: 24,
+            color: '#1a1a1a',
+            textAlign: 'center',
+            fontWeight: 700,
+            background: '#fff',
+            padding: '8px 16px',
+            borderRadius: 8,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         },
         ctaBtn: {
-            border: 'none',
-            color: '#fff',
-            fontSize: 15,
-            fontWeight: 600,
             padding: '16px 40px',
-            borderRadius: 50,
+            fontSize: 18,
+            fontWeight: 700,
+            color: '#fff',
+            border: 'none',
+            borderRadius: 100,
             cursor: 'pointer',
-            fontFamily: baseFont,
+            boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+            transition: 'transform 0.2s',
         },
         nav: {
             position: 'absolute',
