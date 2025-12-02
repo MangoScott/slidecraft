@@ -438,18 +438,25 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
 
     return (
         <div style={styles.hyb.container}>
-            {/* Accent line on far left */}
-            <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 4,
-                background: accentColor,
-            }} />
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 16 }}>
+                {/* Accent line on far left */}
+                <div style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    background: accentColor,
+                }} />
 
-            <div style={styles.hyb.slideContainer}>
-                {renderSlide()}
+                <div style={styles.hyb.slideContainer}>
+                    {renderSlide()}
+                </div>
+
+                <div style={styles.hyb.nav}>
+                    <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
+                </div>
+                {!isFullscreen && <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>}
             </div>
 
             {/* External Navigation Arrows */}
@@ -457,11 +464,6 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
             <button onClick={prevSlide} style={isFullscreen ? getArrowStyles('left', true) : { ...getArrowStyles('left', false), color: accentColor, borderColor: accentColor }}>←</button>
             {/* @ts-ignore */}
             <button onClick={nextSlide} style={isFullscreen ? getArrowStyles('right', true) : { ...getArrowStyles('right', false), color: accentColor, borderColor: accentColor }}>→</button>
-
-            <div style={styles.hyb.nav}>
-                <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
-            </div>
-            {!isFullscreen && <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>}
         </div>
     );
 };
@@ -766,8 +768,15 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, i
 
     return (
         <div style={styles.max.container}>
-            <div style={styles.max.slideContainer}>
-                <MaximalistSlide slide={slide} logoUrl={logoUrl} />
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 16 }}>
+                <div style={styles.max.slideContainer}>
+                    <MaximalistSlide slide={slide} logoUrl={logoUrl} />
+                </div>
+
+                <div style={styles.max.nav}>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1} / {slides.length}</span>
+                </div>
+                {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
             </div>
 
             {/* External Navigation Arrows */}
@@ -775,11 +784,6 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, i
             <button onClick={prevSlide} style={isFullscreen ? getArrowStyles('left', true) : { ...getArrowStyles('left', false), background: colors.pink, border: 'none', color: 'white' }}>←</button>
             {/* @ts-ignore */}
             <button onClick={nextSlide} style={isFullscreen ? getArrowStyles('right', true) : { ...getArrowStyles('right', false), background: colors.green, border: 'none', color: 'white' }}>→</button>
-
-            <div style={styles.max.nav}>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1} / {slides.length}</span>
-            </div>
-            {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
         </div>
     );
 };
@@ -1001,7 +1005,7 @@ const styles: Record<string, any> = {
             background: '#fff',
             position: 'relative',
             fontFamily: baseFont,
-            overflow: 'hidden',
+            // overflow: 'hidden',
             boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
             borderRadius: 16,
         },
@@ -1167,7 +1171,7 @@ const styles: Record<string, any> = {
             background: '#FFFBF5',
             position: 'relative',
             fontFamily: baseFont,
-            overflow: 'hidden',
+            // overflow: 'hidden',
             boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
             borderRadius: 16,
         },
