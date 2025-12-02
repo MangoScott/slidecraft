@@ -38,6 +38,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [presentation, setPresentation] = useState<Presentation | null>(null);
   const [error, setError] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +104,23 @@ export default function Home() {
             <a href="#examples">Examples</a>
             <a href="#" className={styles.navBtn}>Get Started</a>
           </div>
+          <button
+            className={styles.mobileMenuBtn}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className={mobileMenuOpen ? styles.open : ''}></span>
+            <span className={mobileMenuOpen ? styles.open : ''}></span>
+            <span className={mobileMenuOpen ? styles.open : ''}></span>
+          </button>
         </nav>
+        {mobileMenuOpen && (
+          <div className={styles.mobileMenu}>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
+            <a href="#examples" onClick={() => setMobileMenuOpen(false)}>Examples</a>
+            <a href="#" className={styles.navBtn} onClick={() => setMobileMenuOpen(false)}>Get Started</a>
+          </div>
+        )}
       </header>
 
       <main>
