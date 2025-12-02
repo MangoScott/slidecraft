@@ -72,7 +72,7 @@ Requirements:
 
 Generate ONLY the JSON, no markdown formatting or explanations.`;
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
