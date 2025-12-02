@@ -285,6 +285,78 @@
   font-size: 0.95rem;
 }
 
+/* How It Works Section */
+.howItWorks {
+  padding: 100px 0;
+  background: var(--surface-color);
+}
+
+.howItWorksContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.howItWorksContainer h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-color);
+}
+
+.sectionSubtitle {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 64px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+}
+
+.step {
+  position: relative;
+  text-align: center;
+}
+
+.stepNumber {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.stepIcon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.step h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-color);
+}
+
+.step p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Results Section */
 .error {
   margin-top: 24px;
   background: #fee2e2;
@@ -395,5 +467,14 @@
 
   .mobileMenu {
     display: flex;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .howItWorksContainer h2 {
+    font-size: 2rem;
   }
 }

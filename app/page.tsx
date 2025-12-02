@@ -101,7 +101,6 @@ export default function Home() {
           <a href="/" className={styles.logo}>SlideCraft<span>.</span></a>
           <div className={styles.navLinks}>
             <a href="#how-it-works">How It Works</a>
-            <a href="#examples">Examples</a>
             <a href="#" className={styles.navBtn}>Get Started</a>
           </div>
           <button
@@ -117,7 +116,6 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className={styles.mobileMenu}>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-            <a href="#examples" onClick={() => setMobileMenuOpen(false)}>Examples</a>
             <a href="#" className={styles.navBtn} onClick={() => setMobileMenuOpen(false)}>Get Started</a>
           </div>
         )}
@@ -181,6 +179,38 @@ export default function Home() {
                 <span>⚠️</span> {error}
               </div>
             )}
+          </div>
+        </section>
+
+        <section id="how-it-works" className={styles.howItWorks}>
+          <div className={styles.howItWorksContainer}>
+            <h2>How It Works</h2>
+            <p className={styles.sectionSubtitle}>
+              Three simple steps to turn any article into a professional presentation
+            </p>
+
+            <div className={styles.steps}>
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>1</div>
+                <div className={styles.stepIcon}>🔗</div>
+                <h3>Paste a URL</h3>
+                <p>Drop in a link to any article, blog post, or documentation page.</p>
+              </div>
+
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>2</div>
+                <div className={styles.stepIcon}>✨</div>
+                <h3>AI Analyzes</h3>
+                <p>Our AI reads the content and structures it into logical slides.</p>
+              </div>
+
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>3</div>
+                <div className={styles.stepIcon}>🎨</div>
+                <h3>Present & Export</h3>
+                <p>Navigate your slides, present fullscreen, or export to PDF.</p>
+              </div>
+            </div>
           </div>
         </section>
 
