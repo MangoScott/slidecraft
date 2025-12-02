@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 // ============================================
 
 export interface Slide {
-    type: 'title' | 'statement' | 'two-column' | 'quote' | 'end' | 'big-number' | 'grid' | 'split';
+    type: 'title' | 'statement' | 'two-column' | 'quote' | 'end' | 'big-number' | 'grid' | 'split' | 'content';
     title?: string;
     subtitle?: string;
     text?: string;
@@ -172,6 +172,23 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                     />
                 </div>
             );
+        case 'content':
+            return (
+                <div style={styles.min.contentSlide}>
+                    <EditableText
+                        tagName="h2"
+                        style={styles.min.contentTitle}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={styles.min.contentText}
+                        value={slide.text || ''}
+                        onChange={(val) => handleEdit('text', val)}
+                    />
+                </div>
+            );
         case 'two-column':
             return (
                 <div style={styles.min.twoColSlide}>
@@ -285,6 +302,15 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
             setCurrentSlide(slides.length - 1);
         }
     }, [slides.length, currentSlide]);
+
+    // Auto-navigate to new slide
+    const prevSlidesLength = useRef(slides.length);
+    useEffect(() => {
+        if (slides.length > prevSlidesLength.current) {
+            setCurrentSlide(slides.length - 1);
+        }
+        prevSlidesLength.current = slides.length;
+    }, [slides.length]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -439,6 +465,23 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                     />
                 </div>
             );
+        case 'content':
+            return (
+                <div style={styles.hyb.contentSlide}>
+                    <EditableText
+                        tagName="h2"
+                        style={{ ...styles.hyb.contentTitle, color: accentColor }}
+                        value={slide.title || ''}
+                        onChange={(val) => handleEdit('title', val)}
+                    />
+                    <EditableText
+                        tagName="p"
+                        style={styles.hyb.contentText}
+                        value={slide.text || ''}
+                        onChange={(val) => handleEdit('text', val)}
+                    />
+                </div>
+            );
         case 'two-column':
             return (
                 <div style={styles.hyb.twoColSlide}>
@@ -553,6 +596,15 @@ export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: nu
             setCurrentSlide(slides.length - 1);
         }
     }, [slides.length, currentSlide]);
+
+    // Auto-navigate to new slide
+    const prevSlidesLength = useRef(slides.length);
+    useEffect(() => {
+        if (slides.length > prevSlidesLength.current) {
+            setCurrentSlide(slides.length - 1);
+        }
+        prevSlidesLength.current = slides.length;
+    }, [slides.length]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -908,6 +960,25 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         </div>
                     </div>
                 );
+            case 'content':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.green }}>
+                        <div style={styles.max.contentSlide}>
+                            <EditableText
+                                tagName="h2"
+                                style={styles.max.contentTitle}
+                                value={slide.title || ''}
+                                onChange={(val) => handleEdit('title', val)}
+                            />
+                            <EditableText
+                                tagName="p"
+                                style={styles.max.contentText}
+                                value={slide.text || ''}
+                                onChange={(val) => handleEdit('text', val)}
+                            />
+                        </div>
+                    </div>
+                );
             case 'end':
                 return (
                     <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
@@ -992,6 +1063,15 @@ export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
             setCurrentSlide(slides.length - 1);
         }
     }, [slides.length, currentSlide]);
+
+    // Auto-navigate to new slide
+    const prevSlidesLength = useRef(slides.length);
+    useEffect(() => {
+        if (slides.length > prevSlidesLength.current) {
+            setCurrentSlide(slides.length - 1);
+        }
+        prevSlidesLength.current = slides.length;
+    }, [slides.length]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -1199,6 +1279,28 @@ const styles: Record<string, any> = {
             width: 1,
             height: 200,
             background: '#e0e0e0',
+        },
+        contentSlide: {
+            width: '100%',
+            height: '100%',
+            padding: '60px 80px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+        },
+        contentTitle: {
+            fontSize: 36,
+            fontWeight: 700,
+            marginBottom: 30,
+            color: '#1a1a1a',
+        },
+        contentText: {
+            fontSize: 24,
+            lineHeight: 1.6,
+            color: '#4a4a4a',
+            whiteSpace: 'pre-wrap',
         },
         quoteSlide: {
             textAlign: 'center',
@@ -1611,15 +1713,43 @@ const styles: Record<string, any> = {
             background: '#FFFBF5',
         },
         splitArrowCircle: {
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 22,
-            fontWeight: 700,
+            fontSize: 12,
+            fontWeight: 800,
             color: '#1a1a1a',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        },
+        contentSlide: {
+            width: '100%',
+            height: '100%',
+            padding: '60px 80px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            textAlign: 'left',
+            zIndex: 2,
+            position: 'relative',
+        },
+        contentTitle: {
+            fontSize: 48,
+            fontWeight: 900,
+            marginBottom: 30,
+            color: '#1a1a1a',
+            letterSpacing: '-0.02em',
+        },
+        contentText: {
+            fontSize: 24,
+            lineHeight: 1.5,
+            fontWeight: 500,
+            color: '#1a1a1a',
+            whiteSpace: 'pre-wrap',
+            maxWidth: '80%',
         },
         endContent: {
             textAlign: 'center',

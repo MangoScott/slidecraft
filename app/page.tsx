@@ -244,8 +244,9 @@ export default function Home() {
   const handleAddSlide = (index: number) => {
     if (!presentation) return;
     const newSlide: any = {
-      type: 'statement',
-      text: 'New Slide',
+      type: 'content',
+      title: 'New Slide',
+      text: 'Click to edit this text...',
     };
     const newSlides = [...presentation.slides];
     newSlides.splice(index + 1, 0, newSlide);
