@@ -109,6 +109,7 @@
 
 .heroTitle span {
   background: linear-gradient(135deg, #4A9B8C 0%, #2E6A5E 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -703,6 +704,61 @@
 
 .backLink:hover {
   color: #4A9B8C;
+}
+
+.headerRight {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.exportButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.expandBtn,
+.exportBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid #e0e0e0;
+}
+
+.expandBtn {
+  background: linear-gradient(135deg, #4A9B8C 0%, #2E6A5E 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(74, 155, 140, 0.2);
+}
+
+.expandBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(74, 155, 140, 0.3);
+}
+
+.exportBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #4A9B8C;
+  color: #4A9B8C;
+}
+
+.exportBtn svg,
+.expandBtn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .templateSwitcher {

@@ -384,6 +384,19 @@ export default function Home() {
     printContainer.style.display = 'none';
   };
 
+  const handleExportToSlides = async () => {
+    if (!presentation) return;
+
+    // For now, show instructions for manual export
+    // In production, this would integrate with Google Slides API
+    const message = `📊 Google Slides Export\n\nTo export your presentation to Google Slides:\n\n1. Click the "PDF" button to download your presentation\n2. Go to Google Slides (slides.google.com)\n3. Create a new presentation\n4. Use File → Import slides\n5. Upload your downloaded PDF\n\nFull Google Slides API integration coming soon!`;
+
+    alert(message);
+
+    // Optionally trigger PDF download automatically
+    // handleDownloadPDF();
+  };
+
   const getLoadingMessage = () => {
     switch (loadingStep) {
       case 0: return 'Analyzing content structure...';
@@ -633,13 +646,31 @@ export default function Home() {
                   <h2>{presentation.title}</h2>
                 </div>
 
-                <div className={styles.headerRight} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <button onClick={toggleFullscreen} className={styles.navBtn} style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
-                    ⛶ Expand
-                  </button>
-                  <button onClick={handleDownloadPDF} className={styles.navBtn} style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
-                    ⬇ PDF
-                  </button>
+                <div className={styles.headerRight}>
+                  <div className={styles.exportButtons}>
+                    <button onClick={toggleFullscreen} className={styles.expandBtn} title="Present in fullscreen">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      </svg>
+                      <span>Expand</span>
+                    </button>
+                    <button onClick={handleDownloadPDF} className={styles.exportBtn} title="Download as PDF">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>PDF</span>
+                    </button>
+                    <button onClick={handleExportToSlides} className={styles.exportBtn} title="Export to Google Slides">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="9" y1="9" x2="15" y2="9" />
+                        <line x1="9" y1="15" x2="15" y2="15" />
+                      </svg>
+                      <span>Slides</span>
+                    </button>
+                  </div>
                   <div className={styles.templateSwitcher}>
                     <label>Style:</label>
                     <select
