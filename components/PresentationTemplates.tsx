@@ -1200,8 +1200,8 @@ const styles: Record<string, any> = {
     // Hybrid Styles
     hyb: {
         container: {
-            width: 800,
-            height: 500,
+            width: 960,
+            height: 540,
             background: '#fff',
             position: 'relative',
             fontFamily: baseFont,
@@ -1211,7 +1211,7 @@ const styles: Record<string, any> = {
         },
         slideContainer: {
             width: '100%',
-            height: 440,
+            height: 540,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1366,8 +1366,8 @@ const styles: Record<string, any> = {
     // Maximalist Styles
     max: {
         container: {
-            width: 800,
-            height: 500,
+            width: 960,
+            height: 540,
             background: '#FFFBF5',
             position: 'relative',
             fontFamily: baseFont,
@@ -1377,7 +1377,7 @@ const styles: Record<string, any> = {
         },
         slideContainer: {
             width: '100%',
-            height: 440,
+            height: 540,
             position: 'relative',
         },
         contentLayer: {
