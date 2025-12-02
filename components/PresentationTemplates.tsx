@@ -691,182 +691,293 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
         yellow: '#FFC900',
         cyan: '#23A094',
         blue: '#0090FF',
-        green: '#B5E48C'
+        green: '#B5E48C',
+        orange: '#FF6B35',
+        purple: '#9B59B6',
     };
 
-    switch (slide.type) {
-        case 'title':
-            return (
-                <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
-                    <div style={styles.max.titleContent}>
-                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 60, marginBottom: 30 }} />}
-                        <EditableText
-                            tagName="h1"
-                            style={styles.max.titleMain}
-                            value={slide.title || ''}
-                            onChange={(val) => handleEdit('title', val)}
-                        />
-                        <EditableText
-                            tagName="p"
-                            style={styles.max.titleSub}
-                            value={slide.subtitle || ''}
-                            onChange={(val) => handleEdit('subtitle', val)}
-                        />
-                    </div>
-                </div>
-            );
-        case 'big-number':
-            return (
-                <div style={{ ...styles.max.contentLayer, background: colors.pink }}>
-                    <div style={styles.max.bigNumContent}>
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.bigNum}
-                            value={slide.number || ''}
-                            onChange={(val) => handleEdit('number', val)}
-                        />
-                        <EditableText
-                            tagName="h3"
-                            style={styles.max.bigNumLabel}
-                            value={slide.label || ''}
-                            onChange={(val) => handleEdit('label', val)}
-                        />
-                        <EditableText
-                            tagName="p"
-                            style={styles.max.bigNumDetail}
-                            value={slide.detail || ''}
-                            onChange={(val) => handleEdit('detail', val)}
-                        />
-                    </div>
-                </div>
-            );
-        case 'grid':
-            return (
-                <div style={{ ...styles.max.contentLayer, background: '#fff' }}>
-                    <div style={styles.max.gridContent}>
-                        <EditableText
-                            tagName="h2"
-                            style={styles.max.gridTitle}
-                            value={slide.title || ''}
-                            onChange={(val) => handleEdit('title', val)}
-                        />
-                        <div style={styles.max.gridContainer}>
-                            {slide.items?.map((item, i) => (
-                                <div key={i} style={{ ...styles.max.gridItem, background: [colors.pink, colors.yellow, colors.cyan, colors.green][i % 4] }}>
-                                    <span style={styles.max.gridIcon}>
-                                        {/* Check if icon is an image URL (placeholder replacement) */}
-                                        {item.icon && (item.icon.startsWith('http') || item.icon.startsWith('blob')) ? (
-                                            <img src={item.icon} alt="icon" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
-                                        ) : (
-                                            item.icon
-                                        )}
-                                    </span>
-                                    <EditableText
-                                        tagName="span"
-                                        style={styles.max.gridLabel}
-                                        value={item.label}
-                                        onChange={(val) => {
-                                            const newItems = [...(slide.items || [])];
-                                            newItems[i] = { ...newItems[i], label: val };
-                                            handleEdit('items', newItems as any);
-                                        }}
-                                    />
-                                </div>
-                            ))}
+    // Physics shapes for background
+    const [shapes, setShapes] = useState<Shape[]>([]);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const animationRef = useRef<number>(0);
+
+    // Initialize shapes
+    useEffect(() => {
+        const colorArray = Object.values(colors);
+        const newShapes: Shape[] = [];
+
+        for (let i = 0; i < 8; i++) {
+            const size = 40 + Math.random() * 80;
+            const isCircle = Math.random() > 0.3;
+
+            newShapes.push({
+                id: i,
+                x: 50 + Math.random() * 860,
+                y: 50 + Math.random() * 440,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                size,
+                color: colorArray[i % colorArray.length],
+                isCircle,
+                rotation: Math.random() * 30 - 15,
+                floatPhase: Math.random() * Math.PI * 2,
+                floatSpeed: 0.015 + Math.random() * 0.015,
+                dragging: false,
+            });
+        }
+
+        setShapes(newShapes);
+    }, [slide.type]);
+
+    // Animation loop
+    useEffect(() => {
+        const width = 960;
+        const height = 540;
+        const bounce = 0.7;
+
+        const animate = () => {
+            setShapes(prevShapes => {
+                return prevShapes.map(shape => {
+                    if (shape.dragging) return shape;
+
+                    const { size, floatSpeed } = shape;
+                    let { x, y, vx, vy, floatPhase } = shape;
+
+                    // Antigravity float
+                    floatPhase += floatSpeed;
+                    const floatForceX = Math.sin(floatPhase) * 0.03;
+                    const floatForceY = Math.cos(floatPhase * 0.7) * 0.03;
+
+                    vy -= 0.01; // Slight upward drift
+                    vx += floatForceX;
+                    vy += floatForceY;
+                    vx *= 0.995;
+                    vy *= 0.995;
+
+                    x += vx;
+                    y += vy;
+
+                    // Boundary collisions
+                    if (x < 0) { x = 0; vx *= -bounce; }
+                    if (x + size > width) { x = width - size; vx *= -bounce; }
+                    if (y < 0) { y = 0; vy *= -bounce; }
+                    if (y + size > height) { y = height - size; vy *= -bounce; }
+
+                    return { ...shape, x, y, vx, vy, floatPhase };
+                });
+            });
+
+            animationRef.current = requestAnimationFrame(animate);
+        };
+
+        animationRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animationRef.current);
+    }, [slide.type]);
+
+    const renderContent = () => {
+        switch (slide.type) {
+            case 'title':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                        <div style={styles.max.titleContent}>
+                            {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 60, marginBottom: 30 }} />}
+                            <EditableText
+                                tagName="h1"
+                                style={styles.max.titleMain}
+                                value={slide.title || ''}
+                                onChange={(val) => handleEdit('title', val)}
+                            />
+                            <EditableText
+                                tagName="p"
+                                style={styles.max.titleSub}
+                                value={slide.subtitle || ''}
+                                onChange={(val) => handleEdit('subtitle', val)}
+                            />
                         </div>
                     </div>
-                </div>
-            );
-        case 'split':
-            const leftData = slide.left as { title: string; value: string; label: string } | undefined;
-            const rightData = slide.right as { title: string; value: string; label: string } | undefined;
-            return (
-                <div style={styles.max.splitContent}>
-                    <div style={{ ...styles.max.splitHalf, background: colors.blue }}>
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitTitle}
-                            value={leftData?.title || ''}
-                            onChange={(val) => handleEdit('left', { ...leftData, title: val })}
-                        />
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitValue}
-                            value={leftData?.value || ''}
-                            onChange={(val) => handleEdit('left', { ...leftData, value: val })}
-                        />
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitLabel}
-                            value={leftData?.label || ''}
-                            onChange={(val) => handleEdit('left', { ...leftData, label: val })}
-                        />
-                    </div>
-                    <div style={styles.max.splitDivider}>
-                        <div style={{ ...styles.max.splitArrowCircle, background: colors.yellow }}>VS</div>
-                    </div>
-                    <div style={{ ...styles.max.splitHalf, background: '#1a1a1a' }}>
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitTitle}
-                            value={rightData?.title || ''}
-                            onChange={(val) => handleEdit('right', { ...rightData, title: val })}
-                        />
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitValue}
-                            value={rightData?.value || ''}
-                            onChange={(val) => handleEdit('right', { ...rightData, value: val })}
-                        />
-                        <EditableText
-                            tagName="span"
-                            style={styles.max.splitLabel}
-                            value={rightData?.label || ''}
-                            onChange={(val) => handleEdit('right', { ...rightData, label: val })}
-                        />
-                    </div>
-                </div>
-            );
-        case 'end':
-            return (
-                <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
-                    <div style={styles.max.endContent}>
-                        <EditableText
-                            tagName="h1"
-                            style={styles.max.endTitle}
-                            value={slide.title || ''}
-                            onChange={(val) => handleEdit('title', val)}
-                        />
-                        <button style={{ ...styles.max.ctaBtn, background: '#1a1a1a' }}>
+                );
+            case 'big-number':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.pink }}>
+                        <div style={styles.max.bigNumContent}>
                             <EditableText
                                 tagName="span"
-                                value={slide.cta || 'Contact Us'}
-                                onChange={(val) => handleEdit('cta', val)}
+                                style={styles.max.bigNum}
+                                value={slide.number || ''}
+                                onChange={(val) => handleEdit('number', val)}
                             />
-                        </button>
+                            <EditableText
+                                tagName="h3"
+                                style={styles.max.bigNumLabel}
+                                value={slide.label || ''}
+                                onChange={(val) => handleEdit('label', val)}
+                            />
+                            <EditableText
+                                tagName="p"
+                                style={styles.max.bigNumDetail}
+                                value={slide.detail || ''}
+                                onChange={(val) => handleEdit('detail', val)}
+                            />
+                        </div>
                     </div>
-                </div>
-            );
-        default:
-            return (
-                <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
-                    <div style={styles.max.titleContent}>
-                        <EditableText
-                            tagName="h1"
-                            style={styles.max.titleMain}
-                            value={slide.title || ''}
-                            onChange={(val) => handleEdit('title', val)}
-                        />
-                        <EditableText
-                            tagName="p"
-                            style={styles.max.titleSub}
-                            value={slide.text || ''}
-                            onChange={(val) => handleEdit('text', val)}
-                        />
+                );
+            case 'grid':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: '#fff' }}>
+                        <div style={styles.max.gridContent}>
+                            <EditableText
+                                tagName="h2"
+                                style={styles.max.gridTitle}
+                                value={slide.title || ''}
+                                onChange={(val) => handleEdit('title', val)}
+                            />
+                            <div style={styles.max.gridContainer}>
+                                {slide.items?.map((item, i) => (
+                                    <div key={i} style={{ ...styles.max.gridItem, background: [colors.pink, colors.yellow, colors.cyan, colors.green][i % 4] }}>
+                                        <span style={styles.max.gridIcon}>
+                                            {/* Check if icon is an image URL (placeholder replacement) */}
+                                            {item.icon && (item.icon.startsWith('http') || item.icon.startsWith('blob')) ? (
+                                                <img src={item.icon} alt="icon" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+                                            ) : (
+                                                item.icon
+                                            )}
+                                        </span>
+                                        <EditableText
+                                            tagName="span"
+                                            style={styles.max.gridLabel}
+                                            value={item.label}
+                                            onChange={(val) => {
+                                                const newItems = [...(slide.items || [])];
+                                                newItems[i] = { ...newItems[i], label: val };
+                                                handleEdit('items', newItems as any);
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            );
-    }
+                );
+            case 'split':
+                const leftData = slide.left as { title: string; value: string; label: string } | undefined;
+                const rightData = slide.right as { title: string; value: string; label: string } | undefined;
+                return (
+                    <div style={styles.max.splitContent}>
+                        <div style={{ ...styles.max.splitHalf, background: colors.blue }}>
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitTitle}
+                                value={leftData?.title || ''}
+                                onChange={(val) => handleEdit('left', { ...leftData, title: val })}
+                            />
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitValue}
+                                value={leftData?.value || ''}
+                                onChange={(val) => handleEdit('left', { ...leftData, value: val })}
+                            />
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitLabel}
+                                value={leftData?.label || ''}
+                                onChange={(val) => handleEdit('left', { ...leftData, label: val })}
+                            />
+                        </div>
+                        <div style={styles.max.splitDivider}>
+                            <div style={{ ...styles.max.splitArrowCircle, background: colors.yellow }}>VS</div>
+                        </div>
+                        <div style={{ ...styles.max.splitHalf, background: '#1a1a1a' }}>
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitTitle}
+                                value={rightData?.title || ''}
+                                onChange={(val) => handleEdit('right', { ...rightData, title: val })}
+                            />
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitValue}
+                                value={rightData?.value || ''}
+                                onChange={(val) => handleEdit('right', { ...rightData, value: val })}
+                            />
+                            <EditableText
+                                tagName="span"
+                                style={styles.max.splitLabel}
+                                value={rightData?.label || ''}
+                                onChange={(val) => handleEdit('right', { ...rightData, label: val })}
+                            />
+                        </div>
+                    </div>
+                );
+            case 'end':
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
+                        <div style={styles.max.endContent}>
+                            <EditableText
+                                tagName="h1"
+                                style={styles.max.endTitle}
+                                value={slide.title || ''}
+                                onChange={(val) => handleEdit('title', val)}
+                            />
+                            <button style={{ ...styles.max.ctaBtn, background: '#1a1a1a' }}>
+                                <EditableText
+                                    tagName="span"
+                                    value={slide.cta || 'Contact Us'}
+                                    onChange={(val) => handleEdit('cta', val)}
+                                />
+                            </button>
+                        </div>
+                    </div>
+                );
+            default:
+                return (
+                    <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                        <div style={styles.max.titleContent}>
+                            <EditableText
+                                tagName="h1"
+                                style={styles.max.titleMain}
+                                value={slide.title || ''}
+                                onChange={(val) => handleEdit('title', val)}
+                            />
+                            <EditableText
+                                tagName="p"
+                                style={styles.max.titleSub}
+                                value={slide.text || ''}
+                                onChange={(val) => handleEdit('text', val)}
+                            />
+                        </div>
+                    </div>
+                );
+        }
+    };
+
+    return (
+        <div ref={containerRef} style={styles.max.slideContainer}>
+            {/* Physics shapes layer */}
+            {shapes.map((shape) => (
+                <div
+                    key={shape.id}
+                    style={{
+                        position: 'absolute',
+                        left: shape.x,
+                        top: shape.y,
+                        width: shape.size,
+                        height: shape.size,
+                        borderRadius: shape.isCircle ? '50%' : shape.size * 0.2,
+                        background: shape.color,
+                        transform: `rotate(${shape.rotation}deg)`,
+                        boxShadow: `0 6px 24px ${shape.color}30`,
+                        zIndex: 1,
+                        pointerEvents: 'none',
+                    }}
+                />
+            ))}
+
+            {/* Content layer */}
+            <div style={{ ...styles.max.contentLayer, pointerEvents: 'auto' }}>
+                {renderContent()}
+            </div>
+        </div>
+    );
 };
 
 export const MaximalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: number, field: string, value: any) => void }> = ({ slides, logoUrl, isFullscreen, onEdit, onAdd, onDelete }) => {
