@@ -478,3 +478,273 @@
     font-size: 2rem;
   }
 }
+
+/* Wizard UI */
+.wizardContainer {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  margin: 0 auto;
+  pointer-events: auto;
+  text-align: left;
+}
+
+.wizardSteps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.wizardStep {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+  background: white;
+  padding: 0 8px;
+}
+
+.wizardStep.active {
+  color: var(--accent-color);
+}
+
+.wizardStep.completed {
+  color: var(--text-color);
+}
+
+.wizardLine {
+  flex: 1;
+  height: 2px;
+  background: var(--border-color);
+  margin: 0 12px;
+}
+
+.stepContent {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input Tabs */
+.inputTabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.tabBtn.activeTab {
+  background: var(--surface-color);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.fileDrop {
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.fileDrop:hover {
+  border-color: var(--accent-color);
+  background: var(--surface-color);
+}
+
+.fileIcon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Customization */
+.customGrid {
+  display: grid;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+.customGroup label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-color);
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.templateCard {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.templateCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.templateCard.selectedTemplate {
+  border-color: var(--accent-color);
+  background: var(--surface-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+.templateName {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.templateDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.brandingRow {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.logoUpload {
+  width: 80px;
+  height: 80px;
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background-size: cover;
+  background-position: center;
+}
+
+.colorPicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colorPicker input {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Loading */
+.loadingState {
+  text-align: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Result Header */
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  padding: 0;
+}
+
+.templateSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.templateSwitcher select {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.viewerWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
