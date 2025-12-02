@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
-import PhysicsHero from '../components/PhysicsHero';
+
 import {
   MinimalistTemplate,
   HybridTemplate,
@@ -11,8 +11,7 @@ import {
   MinimalistSlide,
   HybridSlide,
   MaximalistSlide,
-  Presentation,
-  Slide
+  Presentation
 } from '../components/PresentationTemplates';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -20,6 +19,16 @@ import jsPDF from 'jspdf';
 type Step = 'input' | 'customize' | 'generating' | 'result';
 type InputType = 'url' | 'file';
 type TemplateType = 'minimalist' | 'hybrid' | 'maximalist';
+
+// Curated palettes
+const PALETTES = [
+  '#4A9B8C', // Teal
+  '#FF6B6B', // Coral
+  '#4ECDC4', // Mint
+  '#1a1a1a', // Black
+  '#45B7D1', // Sky
+  '#96CEB4', // Sage
+];
 
 export default function Home() {
   // State
@@ -39,6 +48,7 @@ export default function Home() {
 
   // Result
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0); // 0: Analyzing, 1: Extracting, 2: Designing, 3: Finalizing
   const [presentation, setPresentation] = useState<Presentation | null>(null);
   const [error, setError] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -50,7 +60,6 @@ export default function Home() {
   // Handlers
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Smart URL: We don't force it here, but we can validate on blur or submit
     setUrl(val);
   };
 
@@ -59,12 +68,10 @@ export default function Home() {
     if (!f) return;
     setFile(f);
 
-    // Parse immediately if text
     if (f.type === 'text/plain' || f.name.endsWith('.md') || f.name.endsWith('.txt')) {
       const text = await f.text();
       setFileContent(text);
     } else if (f.type === 'application/pdf') {
-      // We'll parse PDF on submit or here? Let's do it here to show status
       setFileContent('PDF Selected');
     }
   };
@@ -97,7 +104,13 @@ export default function Home() {
 
   const generatePresentation = async () => {
     setLoading(true);
+    setLoadingStep(0);
     setError('');
+
+    // Simulate loading steps for UX
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => (prev < 3 ? prev + 1 : prev));
+    }, 2000);
 
     try {
       let contentToUse = '';
@@ -107,7 +120,6 @@ export default function Home() {
 
       // 1. Get Content
       if (inputType === 'url') {
-        // Smart URL fix
         let finalUrl = url;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           finalUrl = 'https://' + url;
@@ -126,9 +138,7 @@ export default function Home() {
         titleToUse = scraped.title;
         descriptionToUse = scraped.description;
       } else {
-        // File
         if (file?.type === 'application/pdf') {
-          // Parse PDF
           const formData = new FormData();
           formData.append('file', file);
           const parseRes = await fetch('/api/parse-pdf', {
@@ -163,6 +173,8 @@ export default function Home() {
       if (!genRes.ok) throw new Error('Failed to generate presentation');
       const data = await genRes.json();
 
+      clearInterval(stepInterval);
+
       if (data.presentation) {
         setPresentation(data.presentation);
         setStep('result');
@@ -171,13 +183,40 @@ export default function Home() {
       }
 
     } catch (err: unknown) {
+      clearInterval(stepInterval);
       const message = err instanceof Error ? err.message : 'Something went wrong';
       setError(message);
-      setStep('input'); // Go back on error? Or stay?
+      setStep('input');
     } finally {
       setLoading(false);
     }
   };
+
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (isFullscreen) {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        // Target size: 960x540
+        // Leave some padding for arrows (e.g. 100px on each side)
+        const availableWidth = windowWidth - 160;
+        const availableHeight = windowHeight - 40;
+
+        const scaleX = availableWidth / 960;
+        const scaleY = availableHeight / 540;
+        const newScale = Math.min(scaleX, scaleY, 1.5); // Max scale 1.5 to avoid pixelation
+        setScale(newScale);
+      } else {
+        setScale(1);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isFullscreen]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -189,29 +228,50 @@ export default function Home() {
     const printContainer = document.getElementById('print-container');
     if (!printContainer) return;
 
+    // Make visible for capture (but off-screen via CSS)
+    printContainer.style.display = 'block';
+
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'px',
-      format: [800, 500]
+      format: [960, 540]
     });
 
     const slides = printContainer.children;
 
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i] as HTMLElement;
+
+      // Wait a bit for rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(slide, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false
       });
 
       const imgData = canvas.toDataURL('image/png');
 
-      if (i > 0) pdf.addPage([800, 500], 'landscape');
-      pdf.addImage(imgData, 'PNG', 0, 0, 800, 500);
+      if (i > 0) pdf.addPage([960, 540], 'landscape');
+      pdf.addImage(imgData, 'PNG', 0, 0, 960, 540);
     }
 
     pdf.save(`${presentation.title.replace(/\s+/g, '_')}.pdf`);
+
+    // Hide again
+    printContainer.style.display = 'none';
+  };
+
+  const getLoadingMessage = () => {
+    switch (loadingStep) {
+      case 0: return 'Analyzing content structure...';
+      case 1: return 'Extracting key insights...';
+      case 2: return 'Applying design system...';
+      case 3: return 'Finalizing slides...';
+      default: return 'Processing...';
+    }
   };
 
   return (
@@ -229,21 +289,19 @@ export default function Home() {
       <main>
         {step !== 'result' && (
           <section className={styles.hero}>
-            <PhysicsHero />
-
             <div className={styles.heroContent}>
-              <h1 className={styles.heroTitle}>
-                Turn content into <br />
-                <span>beautiful slides</span>.
-              </h1>
+              {step === 'input' && (
+                <h1 className={styles.heroTitle}>
+                  Turn content into <br />
+                  <span>beautiful slides</span>.
+                </h1>
+              )}
 
               <div className={styles.wizardContainer}>
                 {/* Progress Steps */}
                 <div className={styles.wizardSteps}>
                   <div className={`${styles.wizardStep} ${step === 'input' ? styles.active : ''} ${step !== 'input' ? styles.completed : ''}`}>1. Content</div>
-                  <div className={styles.wizardLine} />
                   <div className={`${styles.wizardStep} ${step === 'customize' ? styles.active : ''} ${step === 'generating' ? styles.completed : ''}`}>2. Style</div>
-                  <div className={styles.wizardLine} />
                   <div className={styles.wizardStep}>3. Result</div>
                 </div>
 
@@ -255,7 +313,7 @@ export default function Home() {
                         className={`${styles.tabBtn} ${inputType === 'url' ? styles.activeTab : ''}`}
                         onClick={() => setInputType('url')}
                       >
-                        🔗 URL
+                        🔗 URL Link
                       </button>
                       <button
                         className={`${styles.tabBtn} ${inputType === 'file' ? styles.activeTab : ''}`}
@@ -324,6 +382,9 @@ export default function Home() {
                               className={`${styles.templateCard} ${selectedTemplate === t.id ? styles.selectedTemplate : ''}`}
                               onClick={() => setSelectedTemplate(t.id as TemplateType)}
                             >
+                              <div className={`${styles.templatePreview} ${t.id === 'minimalist' ? styles.previewMin :
+                                t.id === 'hybrid' ? styles.previewHyb : styles.previewMax
+                                }`} />
                               <span className={styles.templateName}>{t.name}</span>
                               <span className={styles.templateDesc}>{t.desc}</span>
                             </button>
@@ -339,7 +400,12 @@ export default function Home() {
                             onClick={() => logoInputRef.current?.click()}
                             style={{ backgroundImage: logo ? `url(${logo})` : 'none' }}
                           >
-                            {!logo && <span>+ Logo</span>}
+                            {!logo && (
+                              <>
+                                <span style={{ fontSize: 24, marginBottom: 8 }}>+</span>
+                                <span>Upload Logo</span>
+                              </>
+                            )}
                             <input
                               type="file"
                               ref={logoInputRef}
@@ -349,13 +415,25 @@ export default function Home() {
                             />
                           </div>
 
-                          <div className={styles.colorPicker}>
-                            <span>Accent Color:</span>
-                            <input
-                              type="color"
-                              value={accentColor}
-                              onChange={(e) => setAccentColor(e.target.value)}
-                            />
+                          <div className={styles.colorPickerContainer}>
+                            <div className={styles.paletteGrid}>
+                              {PALETTES.map(color => (
+                                <button
+                                  key={color}
+                                  className={`${styles.paletteBtn} ${accentColor === color ? styles.activePalette : ''}`}
+                                  style={{ background: color }}
+                                  onClick={() => setAccentColor(color)}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.customColorInput}>
+                              <span>Custom:</span>
+                              <input
+                                type="color"
+                                value={accentColor}
+                                onChange={(e) => setAccentColor(e.target.value)}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -375,9 +453,11 @@ export default function Home() {
                 {/* STEP 3: GENERATING */}
                 {step === 'generating' && (
                   <div className={styles.loadingState}>
-                    <div className={styles.spinner}></div>
-                    <h3>Crafting your slides...</h3>
-                    <p>Analyzing content, structuring narrative, and applying design.</p>
+                    <div className={styles.loaderContainer}>
+                      <div className={styles.spinner}></div>
+                    </div>
+                    <div className={styles.loadingStep}>{getLoadingMessage()}</div>
+                    <div className={styles.loadingSub}>This may take up to 30 seconds</div>
                   </div>
                 )}
 
@@ -421,15 +501,21 @@ export default function Home() {
               {isFullscreen && (
                 <div className={styles.fullscreenWrapper}>
                   <button className={styles.fullscreenClose} onClick={toggleFullscreen}>×</button>
-                  <div className={styles.viewerWrapper}>
+                  <div
+                    className={styles.viewerWrapper}
+                    style={{
+                      transform: `scale(${scale})`,
+                      transformOrigin: 'center center'
+                    }}
+                  >
                     {selectedTemplate === 'minimalist' && (
-                      <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                      <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} isFullscreen={true} />
                     )}
                     {selectedTemplate === 'hybrid' && (
-                      <HybridTemplate slides={presentation.slides} accentColor={accentColor} logoUrl={logo || undefined} />
+                      <HybridTemplate slides={presentation.slides} accentColor={accentColor} logoUrl={logo || undefined} isFullscreen={true} />
                     )}
                     {selectedTemplate === 'maximalist' && (
-                      <MaximalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                      <MaximalistTemplate slides={presentation.slides} logoUrl={logo || undefined} isFullscreen={true} />
                     )}
                   </div>
                 </div>
@@ -448,16 +534,16 @@ export default function Home() {
               </div>
 
               {/* Hidden Print Container */}
-              <div id="print-container" className={styles.printContainer}>
+              <div id="print-container" className={styles.printContainer} style={{ display: 'none' }}>
                 {presentation.slides.map((slide, i) => (
-                  <div key={i} className={styles.printSlide} style={{ width: 800, height: 500, position: 'relative', overflow: 'hidden', background: 'white' }}>
+                  <div key={i} className={styles.printSlide} style={{ width: 960, height: 540, position: 'relative', overflow: 'hidden', background: 'white' }}>
                     {selectedTemplate === 'minimalist' && (
-                      <div style={{ width: 800, height: 500, position: 'relative', padding: 60, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 960, height: 540, position: 'relative', padding: 60, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <MinimalistSlide slide={slide} logoUrl={logo || undefined} />
                       </div>
                     )}
                     {selectedTemplate === 'hybrid' && (
-                      <div style={{ width: 800, height: 500, position: 'relative', padding: '60px 60px 60px 80px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 960, height: 540, position: 'relative', padding: '60px 60px 60px 80px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: accentColor }} />
                         <HybridSlide slide={slide} accentColor={accentColor} logoUrl={logo || undefined} />
                       </div>

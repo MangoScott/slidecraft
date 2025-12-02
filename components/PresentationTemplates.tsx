@@ -33,6 +33,7 @@ interface TemplateProps {
     slides: Slide[];
     accentColor?: string;
     logoUrl?: string;
+    isFullscreen?: boolean;
 }
 
 interface Shape {
@@ -49,6 +50,36 @@ interface Shape {
     floatSpeed: number;
     dragging: boolean;
 }
+
+// Shared Arrow Styles
+const getArrowStyles = (direction: 'left' | 'right', isFullscreen?: boolean) => {
+    const base = {
+        position: isFullscreen ? 'fixed' : 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: isFullscreen ? 'rgba(255, 255, 255, 0.1)' : 'white',
+        border: isFullscreen ? 'none' : '1px solid #ddd',
+        width: isFullscreen ? 60 : 50,
+        height: isFullscreen ? 60 : 50,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontSize: 24,
+        boxShadow: isFullscreen ? 'none' : '0 4px 12px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s',
+        zIndex: 1000,
+        color: isFullscreen ? 'rgba(255, 255, 255, 0.7)' : '#1a1a1a',
+        backdropFilter: isFullscreen ? 'blur(4px)' : 'none',
+    };
+
+    if (direction === 'left') {
+        return { ...base, left: isFullscreen ? 32 : -80 };
+    } else {
+        return { ...base, right: isFullscreen ? 32 : -80 };
+    }
+};
 
 // ============================================
 // MINIMALIST TEMPLATE - "Stark"
@@ -113,7 +144,7 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string }> = ({ 
     }
 };
 
-export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl }) => {
+export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, isFullscreen }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -140,13 +171,15 @@ export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
             </div>
 
             {/* External Navigation Arrows */}
-            <button onClick={prevSlide} style={styles.navArrowLeft}>←</button>
-            <button onClick={nextSlide} style={styles.navArrowRight}>→</button>
+            {/* @ts-ignore */}
+            <button onClick={prevSlide} style={getArrowStyles('left', isFullscreen)}>←</button>
+            {/* @ts-ignore */}
+            <button onClick={nextSlide} style={getArrowStyles('right', isFullscreen)}>→</button>
 
             <div style={styles.min.nav}>
                 <span style={styles.min.slideNum}>{currentSlide + 1} / {slides.length}</span>
             </div>
-            <div style={styles.min.label}>MINIMALIST — &quot;Stark&quot;</div>
+            {!isFullscreen && <div style={styles.min.label}>MINIMALIST — &quot;Stark&quot;</div>}
         </div>
     );
 };
@@ -254,7 +287,7 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
     }
 };
 
-export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = '#4A9B8C', logoUrl }) => {
+export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = '#4A9B8C', logoUrl, isFullscreen }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Static ball positions for title slide
@@ -302,13 +335,15 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
             </div>
 
             {/* External Navigation Arrows */}
-            <button onClick={prevSlide} style={{ ...styles.navArrowLeft, color: accentColor, borderColor: accentColor }}>←</button>
-            <button onClick={nextSlide} style={{ ...styles.navArrowRight, color: accentColor, borderColor: accentColor }}>→</button>
+            {/* @ts-ignore */}
+            <button onClick={prevSlide} style={{ ...getArrowStyles('left', isFullscreen), color: isFullscreen ? 'white' : accentColor, borderColor: isFullscreen ? 'transparent' : accentColor }}>←</button>
+            {/* @ts-ignore */}
+            <button onClick={nextSlide} style={{ ...getArrowStyles('right', isFullscreen), color: isFullscreen ? 'white' : accentColor, borderColor: isFullscreen ? 'transparent' : accentColor }}>→</button>
 
             <div style={styles.hyb.nav}>
                 <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
             </div>
-            <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>
+            {!isFullscreen && <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>}
         </div>
     );
 };
@@ -593,11 +628,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; isStati
     );
 };
 
-export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl }) => {
+export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl, isFullscreen }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    const nextSlide = useCallback(() => setCurrentSlide((prev) => (prev + 1) % slides.length), [slides.length]);
-    const prevSlide = useCallback(() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length), [slides.length]);
+    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
     // Keyboard navigation
     useEffect(() => {
@@ -609,35 +644,24 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [slides.length, nextSlide, prevSlide]);
 
+    const slide = slides[currentSlide];
+
     return (
         <div style={styles.max.container}>
-            <MaximalistSlide slide={slides[currentSlide]} logoUrl={logoUrl} />
+            <div style={styles.max.slideContainer}>
+                <MaximalistSlide slide={slide} logoUrl={logoUrl} />
+            </div>
 
             {/* External Navigation Arrows */}
-            <button onClick={prevSlide} style={{ ...styles.navArrowLeft, background: colors.pink, border: 'none', color: 'white' }}>←</button>
-            <button onClick={nextSlide} style={{ ...styles.navArrowRight, background: colors.green, border: 'none', color: 'white' }}>→</button>
+            {/* @ts-ignore */}
+            <button onClick={prevSlide} style={{ ...getArrowStyles('left', isFullscreen), background: isFullscreen ? 'rgba(0,0,0,0.2)' : colors.pink, border: 'none', color: 'white' }}>←</button>
+            {/* @ts-ignore */}
+            <button onClick={nextSlide} style={{ ...getArrowStyles('right', isFullscreen), background: isFullscreen ? 'rgba(0,0,0,0.2)' : colors.green, border: 'none', color: 'white' }}>→</button>
 
             <div style={styles.max.nav}>
-                <div style={styles.max.dots}>
-                    {slides.map((_, i) => {
-                        const dotColors = [colors.pink, colors.yellow, colors.green, colors.blue, colors.orange];
-                        return (
-                            <div
-                                key={i}
-                                style={{
-                                    width: i === currentSlide ? 24 : 10,
-                                    height: 10,
-                                    borderRadius: 5,
-                                    background: dotColors[i % dotColors.length],
-                                    transition: 'all 0.3s ease',
-                                }}
-                            />
-                        );
-                    })}
-                </div>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{currentSlide + 1}</span>
             </div>
-            <div style={styles.max.label}>MAXIMALIST — &quot;Carnaval&quot;</div>
-            <div style={styles.max.hint}>Drag the shapes!</div>
+            {!isFullscreen && <div style={styles.max.label}>MAXIMALIST — &quot;Bold&quot;</div>}
         </div>
     );
 };
