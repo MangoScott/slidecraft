@@ -413,7 +413,7 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
                     <button
                         onClick={() => onAdd(currentSlide)}
                         style={{
-                            background: '#4A9B8C',
+                            background: '#1a1a1a',
                             color: 'white',
                             border: 'none',
                             borderRadius: '50%',
@@ -434,7 +434,7 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
                 {!isFullscreen && onAddImage && (
                     <label
                         style={{
-                            background: '#4A9B8C',
+                            background: '#1a1a1a',
                             color: 'white',
                             border: 'none',
                             borderRadius: '50%',
@@ -769,7 +769,7 @@ export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: nu
                         <button
                             onClick={() => onAdd(currentSlide)}
                             style={{
-                                background: accentColor,
+                                background: '#1a1a1a',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '50%',
@@ -790,7 +790,7 @@ export const HybridTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex: nu
                     {!isFullscreen && onAddImage && (
                         <label
                             style={{
-                                background: accentColor,
+                                background: '#1a1a1a',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '50%',
