@@ -214,6 +214,7 @@
   border-radius: 16px;
   border: 2px solid transparent;
   background: white;
+  color: #1a1a1a;
   font-family: inherit;
   font-size: 1.1rem;
   margin-bottom: 20px;
@@ -260,6 +261,7 @@
   border-radius: 16px;
   border: 2px solid transparent;
   background: white;
+  color: #1a1a1a;
   font-family: inherit;
   font-size: 1rem;
   resize: vertical;
