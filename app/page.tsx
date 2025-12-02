@@ -387,7 +387,95 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        {/* HOW IT WORKS SECTION */}
+        {step !== 'result' && (
+          <section id="how-it-works" className={styles.howItWorks}>
+            <div className={styles.howItWorksContainer}>
+              <h2 className={styles.sectionTitle}>How It Works</h2>
+              <p className={styles.sectionSubtitle}>Transform any content into stunning presentations in three simple steps</p>
+
+              <div className={styles.stepsGrid}>
+                <div className={styles.stepCard}>
+                  <div className={styles.stepNumber}>1</div>
+                  <div className={styles.stepIcon}>🔗</div>
+                  <h3>Add Your Content</h3>
+                  <p>Paste a URL or upload a PDF/text file. Our AI will extract and analyze the key information.</p>
+                </div>
+
+                <div className={styles.stepCard}>
+                  <div className={styles.stepNumber}>2</div>
+                  <div className={styles.stepIcon}>🎨</div>
+                  <h3>Customize Your Style</h3>
+                  <p>Choose from three stunning templates, upload your logo, and pick your brand colors.</p>
+                </div>
+
+                <div className={styles.stepCard}>
+                  <div className={styles.stepNumber}>3</div>
+                  <div className={styles.stepIcon}>✨</div>
+                  <h3>Get Your Slides</h3>
+                  <p>Watch as AI crafts a professional presentation with engaging layouts and compelling content.</p>
+                </div>
+              </div>
+
+              <div className={styles.features}>
+                <div className={styles.feature}>
+                  <span className={styles.featureIcon}>⚡</span>
+                  <span>Lightning Fast</span>
+                </div>
+                <div className={styles.feature}>
+                  <span className={styles.featureIcon}>🤖</span>
+                  <span>AI-Powered</span>
+                </div>
+                <div className={styles.feature}>
+                  <span className={styles.featureIcon}>🎯</span>
+                  <span>Professional Quality</span>
+                </div>
+                <div className={styles.feature}>
+                  <span className={styles.featureIcon}>🎨</span>
+                  <span>Fully Customizable</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
-    </div>
+
+      {/* FOOTER */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
+          <div className={styles.footerBrand}>
+            <h3>SlideCraft<span>.</span></h3>
+            <p>AI-powered presentation generation</p>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <div className={styles.footerColumn}>
+              <h4>Product</h4>
+              <a href="#how-it-works">How It Works</a>
+              <a href="#">Features</a>
+              <a href="#">Templates</a>
+            </div>
+
+            <div className={styles.footerColumn}>
+              <h4>Company</h4>
+              <a href="#">About</a>
+              <a href="#">Blog</a>
+              <a href="#">Contact</a>
+            </div>
+
+            <div className={styles.footerColumn}>
+              <h4>Legal</h4>
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.footerBottom}>
+          <p>&copy; 2024 SlideCraft. All rights reserved.</p>
+        </div>
+      </footer>
+    </div >
   );
 }
