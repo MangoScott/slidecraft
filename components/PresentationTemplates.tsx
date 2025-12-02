@@ -138,10 +138,13 @@ export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
             <div style={styles.min.slideContainer}>
                 {renderSlide(slides[currentSlide])}
             </div>
+
+            {/* External Navigation Arrows */}
+            <button onClick={prevSlide} style={styles.navArrowLeft}>←</button>
+            <button onClick={nextSlide} style={styles.navArrowRight}>→</button>
+
             <div style={styles.min.nav}>
-                <button onClick={prevSlide} style={styles.min.navBtn}>←</button>
                 <span style={styles.min.slideNum}>{currentSlide + 1} / {slides.length}</span>
-                <button onClick={nextSlide} style={styles.min.navBtn}>→</button>
             </div>
             <div style={styles.min.label}>MINIMALIST — &quot;Stark&quot;</div>
         </div>
@@ -297,10 +300,13 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
             <div style={styles.hyb.slideContainer}>
                 {renderSlide()}
             </div>
+
+            {/* External Navigation Arrows */}
+            <button onClick={prevSlide} style={{ ...styles.navArrowLeft, color: accentColor, borderColor: accentColor }}>←</button>
+            <button onClick={nextSlide} style={{ ...styles.navArrowRight, color: accentColor, borderColor: accentColor }}>→</button>
+
             <div style={styles.hyb.nav}>
-                <button onClick={prevSlide} style={{ ...styles.hyb.navBtn, borderColor: accentColor, color: accentColor }}>←</button>
                 <span style={styles.hyb.slideNum}>{currentSlide + 1} / {slides.length}</span>
-                <button onClick={nextSlide} style={{ ...styles.hyb.navBtn, borderColor: accentColor, color: accentColor }}>→</button>
             </div>
             <div style={styles.hyb.label}>HYBRID — &quot;Kinetic&quot;</div>
         </div>
@@ -373,8 +379,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; isStati
     useEffect(() => {
         if (isStatic) return;
 
-        const width = 800;
-        const height = 440;
+        const width = 960;
+        const height = 540;
         const bounce = 0.7;
 
         const animate = () => {
@@ -607,8 +613,11 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
         <div style={styles.max.container}>
             <MaximalistSlide slide={slides[currentSlide]} logoUrl={logoUrl} />
 
+            {/* External Navigation Arrows */}
+            <button onClick={prevSlide} style={{ ...styles.navArrowLeft, background: colors.pink, border: 'none', color: 'white' }}>←</button>
+            <button onClick={nextSlide} style={{ ...styles.navArrowRight, background: colors.green, border: 'none', color: 'white' }}>→</button>
+
             <div style={styles.max.nav}>
-                <button onClick={prevSlide} style={{ ...styles.max.navBtn, background: colors.pink }}>←</button>
                 <div style={styles.max.dots}>
                     {slides.map((_, i) => {
                         const dotColors = [colors.pink, colors.yellow, colors.green, colors.blue, colors.orange];
@@ -626,7 +635,6 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
                         );
                     })}
                 </div>
-                <button onClick={nextSlide} style={{ ...styles.max.navBtn, background: colors.green }}>→</button>
             </div>
             <div style={styles.max.label}>MAXIMALIST — &quot;Carnaval&quot;</div>
             <div style={styles.max.hint}>Drag the shapes!</div>
@@ -645,23 +653,25 @@ const styles: Record<string, any> = {
     // Minimalist Styles
     min: {
         container: {
-            width: 800,
-            height: 500,
+            width: 960,
+            height: 540,
             background: '#fff',
             position: 'relative',
             fontFamily: baseFont,
-            overflow: 'hidden',
+            // overflow: 'hidden', // Allow arrows to be outside
             boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
             borderRadius: 16,
         },
         slideContainer: {
             width: '100%',
-            height: 440,
+            height: 540,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: 60,
             boxSizing: 'border-box',
+            overflow: 'hidden', // Clip content here instead
+            borderRadius: 16,
         },
         titleSlide: {
             textAlign: 'center',
@@ -765,11 +775,11 @@ const styles: Record<string, any> = {
         nav: {
             position: 'absolute',
             bottom: 20,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            right: 30, // Move to bottom right
             display: 'flex',
             alignItems: 'center',
             gap: 20,
+            zIndex: 10,
         },
         navBtn: {
             background: 'none',
@@ -798,9 +808,48 @@ const styles: Record<string, any> = {
             fontWeight: 600,
             letterSpacing: '0.1em',
             color: '#999',
-            textTransform: 'uppercase',
         },
     },
+    // Shared Arrow Styles
+    navArrowLeft: {
+        position: 'absolute',
+        top: '50%',
+        left: -80,
+        transform: 'translateY(-50%)',
+        background: 'white',
+        border: '1px solid #ddd',
+        width: 50,
+        height: 50,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontSize: 24,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s',
+        zIndex: 100,
+    },
+    navArrowRight: {
+        position: 'absolute',
+        top: '50%',
+        right: -80,
+        transform: 'translateY(-50%)',
+        background: 'white',
+        border: '1px solid #ddd',
+        width: 50,
+        height: 50,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontSize: 24,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s',
+        zIndex: 100,
+    },
+
 
     // Hybrid Styles
     hyb: {
