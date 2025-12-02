@@ -55,6 +55,64 @@ interface Shape {
 // Pure black & white, Swiss design influence
 // ============================================
 
+export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string }> = ({ slide, logoUrl }) => {
+    switch (slide.type) {
+        case 'title':
+            return (
+                <div style={styles.min.titleSlide}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 40, marginBottom: 40 }} />}
+                    <h1 style={styles.min.titleMain}>{slide.title}</h1>
+                    <p style={styles.min.titleSub}>{slide.subtitle}</p>
+                </div>
+            );
+        case 'statement':
+            return (
+                <div style={styles.min.statementSlide}>
+                    <p style={styles.min.statementText}>{slide.text}</p>
+                </div>
+            );
+        case 'two-column':
+            return (
+                <div style={styles.min.twoColSlide}>
+                    <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
+                    <div style={styles.min.twoColContainer}>
+                        <div style={styles.min.column}>
+                            {Array.isArray(slide.left) && slide.left.map((item, i) => (
+                                <p key={i} style={styles.min.columnItem}>{item}</p>
+                            ))}
+                        </div>
+                        <div style={styles.min.columnDivider} />
+                        <div style={styles.min.column}>
+                            {Array.isArray(slide.right) && slide.right.map((item, i) => (
+                                <p key={i} style={styles.min.columnItem}>{item}</p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'quote':
+            return (
+                <div style={styles.min.quoteSlide}>
+                    <p style={styles.min.quoteText}>&quot;{slide.text}&quot;</p>
+                    <p style={styles.min.quoteAuthor}>— {slide.author}</p>
+                </div>
+            );
+        case 'end':
+            return (
+                <div style={styles.min.endSlide}>
+                    <p style={styles.min.endText}>{slide.text || slide.title}</p>
+                </div>
+            );
+        default:
+            return (
+                <div style={styles.min.statementSlide}>
+                    <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
+                    <p style={styles.min.statementText}>{slide.text || slide.detail}</p>
+                </div>
+            );
+    }
+};
+
 export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -72,62 +130,7 @@ export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
     }, [slides.length, nextSlide, prevSlide]);
 
     const renderSlide = (slide: Slide) => {
-        switch (slide.type) {
-            case 'title':
-                return (
-                    <div style={styles.min.titleSlide}>
-                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 40, marginBottom: 40 }} />}
-                        <h1 style={styles.min.titleMain}>{slide.title}</h1>
-                        <p style={styles.min.titleSub}>{slide.subtitle}</p>
-                    </div>
-                );
-            case 'statement':
-                return (
-                    <div style={styles.min.statementSlide}>
-                        <p style={styles.min.statementText}>{slide.text}</p>
-                    </div>
-                );
-            case 'two-column':
-                return (
-                    <div style={styles.min.twoColSlide}>
-                        <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
-                        <div style={styles.min.twoColContainer}>
-                            <div style={styles.min.column}>
-                                {Array.isArray(slide.left) && slide.left.map((item, i) => (
-                                    <p key={i} style={styles.min.columnItem}>{item}</p>
-                                ))}
-                            </div>
-                            <div style={styles.min.columnDivider} />
-                            <div style={styles.min.column}>
-                                {Array.isArray(slide.right) && slide.right.map((item, i) => (
-                                    <p key={i} style={styles.min.columnItem}>{item}</p>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'quote':
-                return (
-                    <div style={styles.min.quoteSlide}>
-                        <p style={styles.min.quoteText}>&quot;{slide.text}&quot;</p>
-                        <p style={styles.min.quoteAuthor}>— {slide.author}</p>
-                    </div>
-                );
-            case 'end':
-                return (
-                    <div style={styles.min.endSlide}>
-                        <p style={styles.min.endText}>{slide.text || slide.title}</p>
-                    </div>
-                );
-            default:
-                // Fallback for other types in minimalist
-                return (
-                    <div style={styles.min.statementSlide}>
-                        <h2 style={styles.min.twoColTitle}>{slide.title}</h2>
-                        <p style={styles.min.statementText}>{slide.text || slide.detail}</p>
-                    </div>
-                );
-        }
+        return <MinimalistSlide slide={slide} logoUrl={logoUrl} />;
     };
 
     return (
@@ -149,6 +152,104 @@ export const MinimalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
 // HYBRID TEMPLATE - "Kinetic"
 // Minimalist + accent line + static keyword balls on title
 // ============================================
+
+export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?: string }> = ({ slide, accentColor, logoUrl }) => {
+    // Static ball positions for title slide
+    const ballPositions = [
+        { x: 480, y: 100 },
+        { x: 580, y: 180 },
+        { x: 650, y: 280 },
+        { x: 520, y: 320 },
+        { x: 420, y: 220 },
+    ];
+
+    switch (slide.type) {
+        case 'title':
+            return (
+                <div style={styles.hyb.titleSlide}>
+                    <div style={styles.hyb.titleContent}>
+                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 32, marginBottom: 24 }} />}
+                        <h1 style={styles.hyb.titleMain}>{slide.title}</h1>
+                        <p style={styles.hyb.titleSub}>{slide.subtitle}</p>
+                    </div>
+                    {slide.keywords && slide.keywords.map((word, i) => {
+                        const pos = ballPositions[i % ballPositions.length];
+                        const size = 80 + word.length * 2;
+                        return (
+                            <div
+                                key={i}
+                                style={{
+                                    position: 'absolute',
+                                    left: pos.x,
+                                    top: pos.y,
+                                    width: size,
+                                    height: size,
+                                    borderRadius: '50%',
+                                    border: `1.5px solid ${accentColor}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: '#fff',
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    color: accentColor,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                }}
+                            >
+                                {word}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        case 'statement':
+            return (
+                <div style={styles.hyb.statementSlide}>
+                    <p style={styles.hyb.statementText}>{slide.text}</p>
+                </div>
+            );
+        case 'two-column':
+            return (
+                <div style={styles.hyb.twoColSlide}>
+                    <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
+                    <div style={styles.hyb.twoColContainer}>
+                        <div style={styles.hyb.column}>
+                            {Array.isArray(slide.left) && slide.left.map((item, i) => (
+                                <p key={i} style={styles.hyb.columnItem}>{item}</p>
+                            ))}
+                        </div>
+                        <div style={{ ...styles.hyb.columnDivider, background: accentColor, opacity: 0.3 }} />
+                        <div style={styles.hyb.column}>
+                            {Array.isArray(slide.right) && slide.right.map((item, i) => (
+                                <p key={i} style={styles.hyb.columnItem}>{item}</p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'quote':
+            return (
+                <div style={styles.hyb.quoteSlide}>
+                    <p style={styles.hyb.quoteText}>&quot;{slide.text}&quot;</p>
+                    <p style={{ ...styles.hyb.quoteAuthor, color: accentColor }}>— {slide.author}</p>
+                </div>
+            );
+        case 'end':
+            return (
+                <div style={styles.hyb.endSlide}>
+                    <p style={styles.hyb.endText}>{slide.text || slide.title}</p>
+                </div>
+            );
+        default:
+            return (
+                <div style={styles.hyb.statementSlide}>
+                    <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
+                    <p style={styles.hyb.statementText}>{slide.text || slide.detail}</p>
+                </div>
+            );
+    }
+};
 
 export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = '#4A9B8C', logoUrl }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -178,93 +279,7 @@ export const HybridTemplate: React.FC<TemplateProps> = ({ slides, accentColor = 
     const slide = slides[currentSlide];
 
     const renderSlide = () => {
-        switch (slide.type) {
-            case 'title':
-                return (
-                    <div style={styles.hyb.titleSlide}>
-                        <div style={styles.hyb.titleContent}>
-                            {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 32, marginBottom: 24 }} />}
-                            <h1 style={styles.hyb.titleMain}>{slide.title}</h1>
-                            <p style={styles.hyb.titleSub}>{slide.subtitle}</p>
-                        </div>
-                        {slide.keywords && slide.keywords.map((word, i) => {
-                            const pos = ballPositions[i % ballPositions.length];
-                            const size = 80 + word.length * 2;
-                            return (
-                                <div
-                                    key={i}
-                                    style={{
-                                        position: 'absolute',
-                                        left: pos.x,
-                                        top: pos.y,
-                                        width: size,
-                                        height: size,
-                                        borderRadius: '50%',
-                                        border: `1.5px solid ${accentColor}`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: '#fff',
-                                        fontSize: 12,
-                                        fontWeight: 500,
-                                        color: accentColor,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                    }}
-                                >
-                                    {word}
-                                </div>
-                            );
-                        })}
-                    </div>
-                );
-            case 'statement':
-                return (
-                    <div style={styles.hyb.statementSlide}>
-                        <p style={styles.hyb.statementText}>{slide.text}</p>
-                    </div>
-                );
-            case 'two-column':
-                return (
-                    <div style={styles.hyb.twoColSlide}>
-                        <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
-                        <div style={styles.hyb.twoColContainer}>
-                            <div style={styles.hyb.column}>
-                                {Array.isArray(slide.left) && slide.left.map((item, i) => (
-                                    <p key={i} style={styles.hyb.columnItem}>{item}</p>
-                                ))}
-                            </div>
-                            <div style={{ ...styles.hyb.columnDivider, background: accentColor, opacity: 0.3 }} />
-                            <div style={styles.hyb.column}>
-                                {Array.isArray(slide.right) && slide.right.map((item, i) => (
-                                    <p key={i} style={styles.hyb.columnItem}>{item}</p>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'quote':
-                return (
-                    <div style={styles.hyb.quoteSlide}>
-                        <p style={styles.hyb.quoteText}>&quot;{slide.text}&quot;</p>
-                        <p style={{ ...styles.hyb.quoteAuthor, color: accentColor }}>— {slide.author}</p>
-                    </div>
-                );
-            case 'end':
-                return (
-                    <div style={styles.hyb.endSlide}>
-                        <p style={styles.hyb.endText}>{slide.text || slide.title}</p>
-                    </div>
-                );
-            default:
-                // Fallback
-                return (
-                    <div style={styles.hyb.statementSlide}>
-                        <h2 style={styles.hyb.twoColTitle}>{slide.title}</h2>
-                        <p style={styles.hyb.statementText}>{slide.text || slide.detail}</p>
-                    </div>
-                );
-        }
+        return <HybridSlide slide={slide} accentColor={accentColor} logoUrl={logoUrl} />;
     };
 
     return (
@@ -310,8 +325,7 @@ const colors = {
     magenta: '#E500A4',
 };
 
-export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl }) => {
-    const [currentSlide, setCurrentSlide] = useState(0);
+export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; isStatic?: boolean }> = ({ slide, logoUrl, isStatic = false }) => {
     const [shapes, setShapes] = useState<Shape[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const animationRef = useRef<number>(0);
@@ -353,10 +367,12 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
 
         setShapes(newShapes);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentSlide]);
+    }, [slide]); // Re-init on slide change
 
     // Physics animation loop (antigravity mode always on)
     useEffect(() => {
+        if (isStatic) return;
+
         const width = 800;
         const height = 440;
         const bounce = 0.7;
@@ -398,10 +414,11 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
 
         animationRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationRef.current);
-    }, [currentSlide]);
+    }, [slide, isStatic]);
 
     // Drag handlers
     const handleMouseDown = useCallback((e: React.MouseEvent, shapeId: number) => {
+        if (isStatic) return;
         e.preventDefault();
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
@@ -417,9 +434,10 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
         setShapes(prev => prev.map(s =>
             s.id === shapeId ? { ...s, dragging: true, vx: 0, vy: 0 } : s
         ));
-    }, [shapes]);
+    }, [shapes, isStatic]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (isStatic) return;
         if (!dragRef.current || !containerRef.current) return;
 
         const rect = containerRef.current.getBoundingClientRect();
@@ -434,9 +452,10 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
             }
             return s;
         }));
-    }, []);
+    }, [isStatic]);
 
     const handleMouseUp = useCallback(() => {
+        if (isStatic) return;
         if (!dragRef.current) return;
 
         setShapes(prev => prev.map(s =>
@@ -444,31 +463,17 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
         ));
 
         dragRef.current = null;
-    }, []);
+    }, [isStatic]);
 
     useEffect(() => {
+        if (isStatic) return;
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [handleMouseMove, handleMouseUp]);
-
-    const nextSlide = useCallback(() => setCurrentSlide((prev) => (prev + 1) % slides.length), [slides.length]);
-    const prevSlide = useCallback(() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length), [slides.length]);
-
-    // Keyboard navigation
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [slides.length, nextSlide, prevSlide]);
-
-    const slide = slides[currentSlide];
+    }, [handleMouseMove, handleMouseUp, isStatic]);
 
     const renderContent = () => {
         switch (slide.type) {
@@ -545,41 +550,62 @@ export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl })
     };
 
     return (
-        <div style={styles.max.container}>
-            <div
-                ref={containerRef}
-                style={styles.max.slideContainer}
-            >
-                {/* Physics shapes layer */}
-                {shapes.map((shape) => (
-                    <div
-                        key={shape.id}
-                        onMouseDown={(e) => handleMouseDown(e, shape.id)}
-                        style={{
-                            position: 'absolute',
-                            left: shape.x,
-                            top: shape.y,
-                            width: shape.size,
-                            height: shape.size,
-                            borderRadius: shape.isCircle ? '50%' : shape.size * 0.2,
-                            background: shape.color,
-                            transform: `rotate(${shape.rotation}deg)`,
-                            cursor: shape.dragging ? 'grabbing' : 'grab',
-                            transition: shape.dragging ? 'none' : 'box-shadow 0.2s',
-                            boxShadow: shape.dragging
-                                ? `0 12px 40px ${shape.color}50`
-                                : `0 6px 24px ${shape.color}30`,
-                            zIndex: shape.dragging ? 100 : 1,
-                            userSelect: 'none',
-                        }}
-                    />
-                ))}
+        <div
+            ref={containerRef}
+            style={styles.max.slideContainer}
+        >
+            {/* Physics shapes layer */}
+            {shapes.map((shape) => (
+                <div
+                    key={shape.id}
+                    onMouseDown={(e) => handleMouseDown(e, shape.id)}
+                    style={{
+                        position: 'absolute',
+                        left: shape.x,
+                        top: shape.y,
+                        width: shape.size,
+                        height: shape.size,
+                        borderRadius: shape.isCircle ? '50%' : shape.size * 0.2,
+                        background: shape.color,
+                        transform: `rotate(${shape.rotation}deg)`,
+                        cursor: shape.dragging ? 'grabbing' : 'grab',
+                        transition: shape.dragging ? 'none' : 'box-shadow 0.2s',
+                        boxShadow: shape.dragging
+                            ? `0 12px 40px ${shape.color}50`
+                            : `0 6px 24px ${shape.color}30`,
+                        zIndex: shape.dragging ? 100 : 1,
+                        userSelect: 'none',
+                    }}
+                />
+            ))}
 
-                {/* Content layer */}
-                <div style={styles.max.contentLayer}>
-                    {renderContent()}
-                </div>
+            {/* Content layer */}
+            <div style={styles.max.contentLayer}>
+                {renderContent()}
             </div>
+        </div>
+    );
+};
+
+export const MaximalistTemplate: React.FC<TemplateProps> = ({ slides, logoUrl }) => {
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    const nextSlide = useCallback(() => setCurrentSlide((prev) => (prev + 1) % slides.length), [slides.length]);
+    const prevSlide = useCallback(() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length), [slides.length]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [slides.length, nextSlide, prevSlide]);
+
+    return (
+        <div style={styles.max.container}>
+            <MaximalistSlide slide={slides[currentSlide]} logoUrl={logoUrl} />
 
             <div style={styles.max.nav}>
                 <button onClick={prevSlide} style={{ ...styles.max.navBtn, background: colors.pink }}>←</button>

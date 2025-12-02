@@ -8,9 +8,14 @@ import {
   MinimalistTemplate,
   HybridTemplate,
   MaximalistTemplate,
+  MinimalistSlide,
+  HybridSlide,
+  MaximalistSlide,
   Presentation,
   Slide
 } from '../components/PresentationTemplates';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 type Step = 'input' | 'customize' | 'generating' | 'result';
 type InputType = 'url' | 'file';
@@ -36,6 +41,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [presentation, setPresentation] = useState<Presentation | null>(null);
   const [error, setError] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,6 +177,41 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!presentation) return;
+
+    const printContainer = document.getElementById('print-container');
+    if (!printContainer) return;
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'px',
+      format: [800, 500]
+    });
+
+    const slides = printContainer.children;
+
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i] as HTMLElement;
+      const canvas = await html2canvas(slide, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      if (i > 0) pdf.addPage([800, 500], 'landscape');
+      pdf.addImage(imgData, 'PNG', 0, 0, 800, 500);
+    }
+
+    pdf.save(`${presentation.title.replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
@@ -356,18 +397,43 @@ export default function Home() {
                   <h2>{presentation.title}</h2>
                 </div>
 
-                <div className={styles.templateSwitcher}>
-                  <label>Style:</label>
-                  <select
-                    value={selectedTemplate}
-                    onChange={(e) => setSelectedTemplate(e.target.value as TemplateType)}
-                  >
-                    <option value="minimalist">Minimalist</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="maximalist">Maximalist</option>
-                  </select>
+                <div className={styles.headerRight} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={toggleFullscreen} className={styles.navBtn} style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
+                    ⛶ Expand
+                  </button>
+                  <button onClick={handleDownloadPDF} className={styles.navBtn} style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
+                    ⬇ PDF
+                  </button>
+                  <div className={styles.templateSwitcher}>
+                    <label>Style:</label>
+                    <select
+                      value={selectedTemplate}
+                      onChange={(e) => setSelectedTemplate(e.target.value as TemplateType)}
+                    >
+                      <option value="minimalist">Minimalist</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="maximalist">Maximalist</option>
+                    </select>
+                  </div>
                 </div>
               </div>
+
+              {isFullscreen && (
+                <div className={styles.fullscreenWrapper}>
+                  <button className={styles.fullscreenClose} onClick={toggleFullscreen}>×</button>
+                  <div className={styles.viewerWrapper}>
+                    {selectedTemplate === 'minimalist' && (
+                      <MinimalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                    )}
+                    {selectedTemplate === 'hybrid' && (
+                      <HybridTemplate slides={presentation.slides} accentColor={accentColor} logoUrl={logo || undefined} />
+                    )}
+                    {selectedTemplate === 'maximalist' && (
+                      <MaximalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className={styles.viewerWrapper}>
                 {selectedTemplate === 'minimalist' && (
@@ -379,6 +445,28 @@ export default function Home() {
                 {selectedTemplate === 'maximalist' && (
                   <MaximalistTemplate slides={presentation.slides} logoUrl={logo || undefined} />
                 )}
+              </div>
+
+              {/* Hidden Print Container */}
+              <div id="print-container" className={styles.printContainer}>
+                {presentation.slides.map((slide, i) => (
+                  <div key={i} className={styles.printSlide} style={{ width: 800, height: 500, position: 'relative', overflow: 'hidden', background: 'white' }}>
+                    {selectedTemplate === 'minimalist' && (
+                      <div style={{ width: 800, height: 500, position: 'relative', padding: 60, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <MinimalistSlide slide={slide} logoUrl={logo || undefined} />
+                      </div>
+                    )}
+                    {selectedTemplate === 'hybrid' && (
+                      <div style={{ width: 800, height: 500, position: 'relative', padding: '60px 60px 60px 80px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: accentColor }} />
+                        <HybridSlide slide={slide} accentColor={accentColor} logoUrl={logo || undefined} />
+                      </div>
+                    )}
+                    {selectedTemplate === 'maximalist' && (
+                      <MaximalistSlide slide={slide} logoUrl={logo || undefined} isStatic={true} />
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div className={styles.instructions}>
