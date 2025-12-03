@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import Draggable from 'react-draggable';
 
 // ============================================
 // TYPES
@@ -25,6 +26,9 @@ export interface Slide {
     items?: { icon: string; label: string }[];
     // End
     cta?: string;
+    // Customization
+    positions?: { [key: string]: { x: number; y: number } };
+    fontSizes?: { [key: string]: number };
 }
 
 export interface Presentation {
@@ -118,22 +122,84 @@ interface EditableTextProps {
     style?: React.CSSProperties;
     tagName?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'div';
     className?: string;
+    fontSize?: number;
+    onFontSizeChange?: (size: number) => void;
+    draggable?: boolean;
+    position?: { x: number; y: number };
+    onPositionChange?: (pos: { x: number; y: number }) => void;
 }
 
-const EditableText: React.FC<EditableTextProps> = ({ value, onChange, style, tagName = 'p', className }) => {
+const EditableText: React.FC<EditableTextProps> = ({
+    value, onChange, style, tagName = 'p', className,
+    fontSize, onFontSizeChange, draggable, position, onPositionChange
+}) => {
     const Tag = tagName as any;
+    const [isFocused, setIsFocused] = useState(false);
+    const nodeRef = useRef(null);
 
-    return (
-        <Tag
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={(e: React.FocusEvent<HTMLElement>) => onChange(e.currentTarget.textContent || '')}
-            style={{ ...style, outline: 'none', cursor: 'text' }}
-            className={`editable-text ${className || ''}`}
-        >
-            {value}
-        </Tag>
+    const content = (
+        <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+            {isFocused && onFontSizeChange && (
+                <div style={{
+                    position: 'absolute', top: -40, right: 0,
+                    background: '#1a1a1a', borderRadius: 8, padding: '4px 8px',
+                    display: 'flex', gap: 8, zIndex: 1000,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }} onMouseDown={e => e.stopPropagation()}>
+                    <button
+                        onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) - 2)}
+                        style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                        title="Decrease font size"
+                    >
+                        A-
+                    </button>
+                    <div style={{ width: 1, background: '#444' }}></div>
+                    <button
+                        onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) + 2)}
+                        style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                        title="Increase font size"
+                    >
+                        A+
+                    </button>
+                </div>
+            )}
+            <Tag
+                contentEditable
+                suppressContentEditableWarning
+                onFocus={() => setIsFocused(true)}
+                onBlur={(e: React.FocusEvent<HTMLElement>) => {
+                    setIsFocused(false);
+                    onChange(e.currentTarget.textContent || '');
+                }}
+                style={{
+                    ...style,
+                    outline: isFocused ? '2px dashed rgba(74, 155, 140, 0.5)' : 'none',
+                    cursor: 'text',
+                    fontSize: fontSize || style?.fontSize,
+                    transition: 'font-size 0.2s'
+                }}
+                className={`editable-text ${className || ''}`}
+            >
+                {value}
+            </Tag>
+        </div>
     );
+
+    if (draggable && onPositionChange) {
+        return (
+            <Draggable
+                nodeRef={nodeRef}
+                position={position || { x: 0, y: 0 }}
+                onStop={(e, data) => onPositionChange({ x: data.x, y: data.y })}
+            >
+                <div ref={nodeRef} style={{ position: 'absolute', zIndex: 100, cursor: 'move' }}>
+                    {content}
+                </div>
+            </Draggable>
+        );
+    }
+
+    return content;
 };
 
 // ============================================
@@ -998,10 +1064,17 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     }, [slide.type]);
 
     const renderContent = () => {
+        const updatePos = (key: string, pos: { x: number; y: number }) => {
+            handleEdit('positions', { ...slide.positions, [key]: pos });
+        };
+        const updateFS = (key: string, size: number) => {
+            handleEdit('fontSizes', { ...slide.fontSizes, [key]: size });
+        };
+
         switch (slide.type) {
             case 'title':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.titleContent}>
                             {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 60, marginBottom: 30 }} />}
                             <EditableText
@@ -1009,56 +1082,85 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 style={styles.max.titleMain}
                                 value={slide.title || ''}
                                 onChange={(val) => handleEdit('title', val)}
+                                fontSize={slide.fontSizes?.title}
+                                onFontSizeChange={(s) => updateFS('title', s)}
+                                draggable
+                                position={slide.positions?.title}
+                                onPositionChange={(p) => updatePos('title', p)}
                             />
                             <EditableText
                                 tagName="p"
                                 style={styles.max.titleSub}
                                 value={slide.subtitle || ''}
                                 onChange={(val) => handleEdit('subtitle', val)}
+                                fontSize={slide.fontSizes?.subtitle}
+                                onFontSizeChange={(s) => updateFS('subtitle', s)}
+                                draggable
+                                position={slide.positions?.subtitle}
+                                onPositionChange={(p) => updatePos('subtitle', p)}
                             />
                         </div>
                     </div>
                 );
             case 'big-number':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.pink }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.bigNumContent}>
                             <EditableText
                                 tagName="span"
                                 style={styles.max.bigNum}
                                 value={slide.number || ''}
                                 onChange={(val) => handleEdit('number', val)}
+                                fontSize={slide.fontSizes?.number}
+                                onFontSizeChange={(s) => updateFS('number', s)}
+                                draggable
+                                position={slide.positions?.number}
+                                onPositionChange={(p) => updatePos('number', p)}
                             />
                             <EditableText
                                 tagName="h3"
                                 style={styles.max.bigNumLabel}
                                 value={slide.label || ''}
                                 onChange={(val) => handleEdit('label', val)}
+                                fontSize={slide.fontSizes?.label}
+                                onFontSizeChange={(s) => updateFS('label', s)}
+                                draggable
+                                position={slide.positions?.label}
+                                onPositionChange={(p) => updatePos('label', p)}
                             />
                             <EditableText
                                 tagName="p"
                                 style={styles.max.bigNumDetail}
                                 value={slide.detail || ''}
                                 onChange={(val) => handleEdit('detail', val)}
+                                fontSize={slide.fontSizes?.detail}
+                                onFontSizeChange={(s) => updateFS('detail', s)}
+                                draggable
+                                position={slide.positions?.detail}
+                                onPositionChange={(p) => updatePos('detail', p)}
                             />
                         </div>
                     </div>
                 );
             case 'grid':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: '#fff' }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.gridContent}>
                             <EditableText
                                 tagName="h2"
                                 style={styles.max.gridTitle}
                                 value={slide.title || ''}
                                 onChange={(val) => handleEdit('title', val)}
+                                fontSize={slide.fontSizes?.title}
+                                onFontSizeChange={(s) => updateFS('title', s)}
+                                draggable
+                                position={slide.positions?.title}
+                                onPositionChange={(p) => updatePos('title', p)}
                             />
                             <div style={styles.max.gridContainer}>
                                 {slide.items?.map((item, i) => (
                                     <div key={i} style={{ ...styles.max.gridItem, background: [colors.pink, colors.yellow, colors.cyan, colors.green][i % 4] }}>
                                         <span style={styles.max.gridIcon}>
-                                            {/* Check if icon is an image URL (placeholder replacement) */}
                                             {item.icon && (item.icon.startsWith('http') || item.icon.startsWith('blob')) ? (
                                                 <img src={item.icon} alt="icon" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
                                             ) : (
@@ -1074,6 +1176,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                                 newItems[i] = { ...newItems[i], label: val };
                                                 handleEdit('items', newItems as any);
                                             }}
+                                            fontSize={slide.fontSizes?.[`grid_${i}`]}
+                                            onFontSizeChange={(s) => updateFS(`grid_${i}`, s)}
                                         />
                                     </div>
                                 ))}
@@ -1092,18 +1196,24 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 style={styles.max.splitTitle}
                                 value={leftData?.title || ''}
                                 onChange={(val) => handleEdit('left', { ...leftData, title: val })}
+                                fontSize={slide.fontSizes?.leftTitle}
+                                onFontSizeChange={(s) => updateFS('leftTitle', s)}
                             />
                             <EditableText
                                 tagName="span"
                                 style={styles.max.splitValue}
                                 value={leftData?.value || ''}
                                 onChange={(val) => handleEdit('left', { ...leftData, value: val })}
+                                fontSize={slide.fontSizes?.leftValue}
+                                onFontSizeChange={(s) => updateFS('leftValue', s)}
                             />
                             <EditableText
                                 tagName="span"
                                 style={styles.max.splitLabel}
                                 value={leftData?.label || ''}
                                 onChange={(val) => handleEdit('left', { ...leftData, label: val })}
+                                fontSize={slide.fontSizes?.leftLabel}
+                                onFontSizeChange={(s) => updateFS('leftLabel', s)}
                             />
                         </div>
                         <div style={styles.max.splitDivider}>
@@ -1115,44 +1225,60 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 style={styles.max.splitTitle}
                                 value={rightData?.title || ''}
                                 onChange={(val) => handleEdit('right', { ...rightData, title: val })}
+                                fontSize={slide.fontSizes?.rightTitle}
+                                onFontSizeChange={(s) => updateFS('rightTitle', s)}
                             />
                             <EditableText
                                 tagName="span"
                                 style={styles.max.splitValue}
                                 value={rightData?.value || ''}
                                 onChange={(val) => handleEdit('right', { ...rightData, value: val })}
+                                fontSize={slide.fontSizes?.rightValue}
+                                onFontSizeChange={(s) => updateFS('rightValue', s)}
                             />
                             <EditableText
                                 tagName="span"
                                 style={styles.max.splitLabel}
                                 value={rightData?.label || ''}
                                 onChange={(val) => handleEdit('right', { ...rightData, label: val })}
+                                fontSize={slide.fontSizes?.rightLabel}
+                                onFontSizeChange={(s) => updateFS('rightLabel', s)}
                             />
                         </div>
                     </div>
                 );
             case 'content':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.green }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.contentSlide}>
                             <EditableText
                                 tagName="h2"
                                 style={styles.max.contentTitle}
                                 value={slide.title || ''}
                                 onChange={(val) => handleEdit('title', val)}
+                                fontSize={slide.fontSizes?.title}
+                                onFontSizeChange={(s) => updateFS('title', s)}
+                                draggable
+                                position={slide.positions?.title}
+                                onPositionChange={(p) => updatePos('title', p)}
                             />
                             <EditableText
                                 tagName="p"
                                 style={styles.max.contentText}
                                 value={slide.text || ''}
                                 onChange={(val) => handleEdit('text', val)}
+                                fontSize={slide.fontSizes?.text}
+                                onFontSizeChange={(s) => updateFS('text', s)}
+                                draggable
+                                position={slide.positions?.text}
+                                onPositionChange={(p) => updatePos('text', p)}
                             />
                         </div>
                     </div>
                 );
             case 'image':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.purple }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.imageSlide}>
                             {slide.image && (
                                 <img
@@ -1174,25 +1300,37 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 style={styles.max.imageCaption}
                                 value={slide.caption || ''}
                                 onChange={(val) => handleEdit('caption', val)}
+                                fontSize={slide.fontSizes?.caption}
+                                onFontSizeChange={(s) => updateFS('caption', s)}
+                                draggable
+                                position={slide.positions?.caption}
+                                onPositionChange={(p) => updatePos('caption', p)}
                             />
                         </div>
                     </div>
                 );
             case 'end':
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.cyan }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.endContent}>
                             <EditableText
                                 tagName="h1"
                                 style={styles.max.endTitle}
                                 value={slide.title || ''}
                                 onChange={(val) => handleEdit('title', val)}
+                                fontSize={slide.fontSizes?.title}
+                                onFontSizeChange={(s) => updateFS('title', s)}
+                                draggable
+                                position={slide.positions?.title}
+                                onPositionChange={(p) => updatePos('title', p)}
                             />
                             <button style={{ ...styles.max.ctaBtn, background: '#1a1a1a' }}>
                                 <EditableText
                                     tagName="span"
                                     value={slide.cta || 'Contact Us'}
                                     onChange={(val) => handleEdit('cta', val)}
+                                    fontSize={slide.fontSizes?.cta}
+                                    onFontSizeChange={(s) => updateFS('cta', s)}
                                 />
                             </button>
                         </div>
@@ -1200,19 +1338,29 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                 );
             default:
                 return (
-                    <div style={{ ...styles.max.contentLayer, background: colors.yellow }}>
+                    <div style={styles.max.contentLayer}>
                         <div style={styles.max.titleContent}>
                             <EditableText
                                 tagName="h1"
                                 style={styles.max.titleMain}
                                 value={slide.title || ''}
                                 onChange={(val) => handleEdit('title', val)}
+                                fontSize={slide.fontSizes?.title}
+                                onFontSizeChange={(s) => updateFS('title', s)}
+                                draggable
+                                position={slide.positions?.title}
+                                onPositionChange={(p) => updatePos('title', p)}
                             />
                             <EditableText
                                 tagName="p"
                                 style={styles.max.titleSub}
                                 value={slide.text || ''}
                                 onChange={(val) => handleEdit('text', val)}
+                                fontSize={slide.fontSizes?.text}
+                                onFontSizeChange={(s) => updateFS('text', s)}
+                                draggable
+                                position={slide.positions?.text}
+                                onPositionChange={(p) => updatePos('text', p)}
                             />
                         </div>
                     </div>
