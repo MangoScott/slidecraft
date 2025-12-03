@@ -2463,7 +2463,7 @@ const styles: Record<string, any> = {
         titleContent: {
             position: 'relative',
             zIndex: 10,
-            maxWidth: '55%',
+            maxWidth: '90%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start', // Left aligned text
@@ -2731,6 +2731,7 @@ const styles: Record<string, any> = {
             textTransform: 'uppercase',
             transform: 'rotate(-2deg)',
             mixBlendMode: 'multiply',
+            maxWidth: '100%',
         },
         titleSub: {
             fontSize: 24,
