@@ -147,7 +147,34 @@ const EditableText: React.FC<EditableTextProps> = ({
 }) => {
     const Tag = tagName as any;
     const [isFocused, setIsFocused] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
+    const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0 });
     const nodeRef = useRef(null);
+
+    // Handle resize mouse events
+    useEffect(() => {
+        if (!isResizing || !onMaxWidthChange) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaX = e.clientX - resizeStart.x;
+            const containerWidth = 960; // Slide width
+            const deltaPercent = (deltaX / containerWidth) * 100;
+            const newWidth = Math.max(20, Math.min(100, resizeStart.width + deltaPercent));
+            onMaxWidthChange(newWidth);
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing, resizeStart, onMaxWidthChange]);
 
     const content = (
         <div style={{
@@ -158,14 +185,19 @@ const EditableText: React.FC<EditableTextProps> = ({
             transform: `rotate(${rotation || 0}deg)`,
             transition: 'transform 0.2s, max-width 0.2s'
         }}>
-            {isFocused && (onFontSizeChange || onRotationChange) && (
+            {isFocused && (onFontSizeChange || onRotationChange || onColorChange || onDelete) && (
                 <div style={{
-                    position: 'absolute', top: -45, right: 0,
-                    background: '#1a1a1a', borderRadius: 8, padding: '6px 10px',
-                    display: 'flex', gap: 12, zIndex: 1000,
+                    position: 'absolute', top: -50, right: 0,
+                    background: '#1a1a1a', borderRadius: 8, padding: '8px 12px',
+                    display: 'flex', gap: 12, zIndex: 10000,
                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                    alignItems: 'center'
-                }} onMouseDown={e => e.stopPropagation()}>
+                    alignItems: 'center',
+                    pointerEvents: 'auto'
+                }}
+                    onMouseDown={e => { e.stopPropagation(); e.preventDefault(); }}
+                    onClick={e => { e.stopPropagation(); e.preventDefault(); }}
+                    onPointerDown={e => { e.stopPropagation(); e.preventDefault(); }}
+                >
                     {onFontSizeChange && (
                         <>
                             <button
@@ -244,26 +276,64 @@ const EditableText: React.FC<EditableTextProps> = ({
                             </button>
                         </>
                     )}
-                    {onMaxWidthChange && (
-                        <>
-                            <div style={{ width: 1, height: 16, background: '#444' }}></div>
-                            <button
-                                onClick={() => onMaxWidthChange(Math.max(20, (maxWidth || 100) - 10))}
-                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
-                                title="Decrease width"
-                            >
-                                ↔️-
-                            </button>
-                            <button
-                                onClick={() => onMaxWidthChange(Math.min(100, (maxWidth || 100) + 10))}
-                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
-                                title="Increase width"
-                            >
-                                ↔️+
-                            </button>
-                        </>
-                    )}
                 </div>
+            )}
+            {/* Resize Handles */}
+            {isFocused && onMaxWidthChange && (
+                <>
+                    {/* Right edge handle */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            right: -4,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 8,
+                            height: 40,
+                            background: '#4A9B8C',
+                            border: '2px solid white',
+                            borderRadius: 4,
+                            cursor: 'ew-resize',
+                            zIndex: 1001
+                        }}
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setIsResizing(true);
+                            setResizeStart({
+                                x: e.clientX,
+                                y: e.clientY,
+                                width: maxWidth || 100
+                            });
+                        }}
+                    />
+                    {/* Left edge handle */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: -4,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 8,
+                            height: 40,
+                            background: '#4A9B8C',
+                            border: '2px solid white',
+                            borderRadius: 4,
+                            cursor: 'ew-resize',
+                            zIndex: 1001
+                        }}
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setIsResizing(true);
+                            setResizeStart({
+                                x: e.clientX,
+                                y: e.clientY,
+                                width: maxWidth || 100
+                            });
+                        }}
+                    />
+                </>
             )}
             <Tag
                 contentEditable
