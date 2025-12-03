@@ -102,9 +102,9 @@ const getArrowStyles = (direction: 'left' | 'right', isFullscreen?: boolean) => 
     };
 
     if (direction === 'left') {
-        return { ...base, left: isFullscreen ? 32 : -80 };
+        return { ...base, left: isFullscreen ? 32 : 20 };
     } else {
-        return { ...base, right: isFullscreen ? 32 : -80 };
+        return { ...base, right: isFullscreen ? 32 : 20 };
     }
 };
 
@@ -2149,7 +2149,16 @@ const styles: Record<string, any> = {
             right: 30,
         },
         label: {
-            display: 'none', // Hide default label
+            position: 'absolute',
+            top: 20,
+            left: 20,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            color: '#fff',
+            background: '#000',
+            padding: '6px 12px',
+            textTransform: 'uppercase',
         },
     },
     // Shared Arrow Styles
@@ -2642,10 +2651,24 @@ const styles: Record<string, any> = {
         },
         splitDivider: {
             width: 0,
-            display: 'none',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 20,
         },
         splitArrowCircle: {
-            display: 'none',
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 900,
+            border: '4px solid #000',
+            fontSize: 24,
+            background: '#fff',
+            boxShadow: '4px 4px 0 #000',
         },
         contentSlide: {
             width: '100%',
