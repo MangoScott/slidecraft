@@ -29,6 +29,7 @@ export interface Slide {
     // Customization
     positions?: { [key: string]: { x: number; y: number } };
     fontSizes?: { [key: string]: number };
+    rotations?: { [key: string]: number };
 }
 
 export interface Presentation {
@@ -127,40 +128,72 @@ interface EditableTextProps {
     draggable?: boolean;
     position?: { x: number; y: number };
     onPositionChange?: (pos: { x: number; y: number }) => void;
+    rotation?: number;
+    onRotationChange?: (deg: number) => void;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
     value, onChange, style, tagName = 'p', className,
-    fontSize, onFontSizeChange, draggable, position, onPositionChange
+    fontSize, onFontSizeChange, draggable, position, onPositionChange,
+    rotation, onRotationChange
 }) => {
     const Tag = tagName as any;
     const [isFocused, setIsFocused] = useState(false);
     const nodeRef = useRef(null);
 
     const content = (
-        <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-            {isFocused && onFontSizeChange && (
+        <div style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '100%',
+            transform: `rotate(${rotation || 0}deg)`,
+            transition: 'transform 0.2s'
+        }}>
+            {isFocused && (onFontSizeChange || onRotationChange) && (
                 <div style={{
-                    position: 'absolute', top: -40, right: 0,
-                    background: '#1a1a1a', borderRadius: 8, padding: '4px 8px',
-                    display: 'flex', gap: 8, zIndex: 1000,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    position: 'absolute', top: -45, right: 0,
+                    background: '#1a1a1a', borderRadius: 8, padding: '6px 10px',
+                    display: 'flex', gap: 12, zIndex: 1000,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                    alignItems: 'center'
                 }} onMouseDown={e => e.stopPropagation()}>
-                    <button
-                        onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) - 2)}
-                        style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
-                        title="Decrease font size"
-                    >
-                        A-
-                    </button>
-                    <div style={{ width: 1, background: '#444' }}></div>
-                    <button
-                        onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) + 2)}
-                        style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
-                        title="Increase font size"
-                    >
-                        A+
-                    </button>
+                    {onFontSizeChange && (
+                        <>
+                            <button
+                                onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) - 2)}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                                title="Decrease font size"
+                            >
+                                A-
+                            </button>
+                            <button
+                                onClick={() => onFontSizeChange((fontSize || parseInt(style?.fontSize as string) || 16) + 2)}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                                title="Increase font size"
+                            >
+                                A+
+                            </button>
+                        </>
+                    )}
+                    {onRotationChange && (
+                        <>
+                            <div style={{ width: 1, height: 16, background: '#444' }}></div>
+                            <button
+                                onClick={() => onRotationChange((rotation || 0) - 5)}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
+                                title="Rotate left"
+                            >
+                                ↺
+                            </button>
+                            <button
+                                onClick={() => onRotationChange((rotation || 0) + 5)}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
+                                title="Rotate right"
+                            >
+                                ↻
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
             <Tag
@@ -186,13 +219,19 @@ const EditableText: React.FC<EditableTextProps> = ({
     );
 
     if (draggable && onPositionChange) {
+        const hasBeenMoved = position && (position.x !== 0 || position.y !== 0);
         return (
             <Draggable
                 nodeRef={nodeRef}
                 position={position || { x: 0, y: 0 }}
                 onStop={(e, data) => onPositionChange({ x: data.x, y: data.y })}
             >
-                <div ref={nodeRef} style={{ position: 'absolute', zIndex: 100, cursor: 'move' }}>
+                <div ref={nodeRef} style={{
+                    position: hasBeenMoved ? 'absolute' : 'relative',
+                    zIndex: hasBeenMoved ? 100 : 'auto',
+                    cursor: 'move',
+                    display: hasBeenMoved ? 'inline-block' : 'block'
+                }}>
                     {content}
                 </div>
             </Draggable>
@@ -208,8 +247,18 @@ const EditableText: React.FC<EditableTextProps> = ({
 // ============================================
 
 export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?: (field: string, value: any) => void }> = ({ slide, logoUrl, onEdit }) => {
-    const handleEdit = (field: string, value: string) => {
+    const handleEdit = (field: string, value: any) => {
         if (onEdit) onEdit(field, value);
+    };
+
+    const updatePos = (key: string, pos: { x: number; y: number }) => {
+        handleEdit('positions', { ...slide.positions, [key]: pos });
+    };
+    const updateFS = (key: string, size: number) => {
+        handleEdit('fontSizes', { ...slide.fontSizes, [key]: size });
+    };
+    const updateRot = (key: string, deg: number) => {
+        handleEdit('rotations', { ...slide.rotations, [key]: deg });
     };
 
     switch (slide.type) {
@@ -222,12 +271,26 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.titleMain}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={styles.min.titleSub}
                         value={slide.subtitle || ''}
                         onChange={(val) => handleEdit('subtitle', val)}
+                        fontSize={slide.fontSizes?.subtitle}
+                        onFontSizeChange={(s) => updateFS('subtitle', s)}
+                        draggable
+                        position={slide.positions?.subtitle}
+                        onPositionChange={(p) => updatePos('subtitle', p)}
+                        rotation={slide.rotations?.subtitle}
+                        onRotationChange={(r) => updateRot('subtitle', r)}
                     />
                 </div>
             );
@@ -239,6 +302,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.statementText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -250,12 +320,26 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.contentTitle}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={styles.min.contentText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -280,6 +364,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.imageCaption}
                         value={slide.caption || ''}
                         onChange={(val) => handleEdit('caption', val)}
+                        fontSize={slide.fontSizes?.caption}
+                        onFontSizeChange={(s) => updateFS('caption', s)}
+                        draggable
+                        position={slide.positions?.caption}
+                        onPositionChange={(p) => updatePos('caption', p)}
+                        rotation={slide.rotations?.caption}
+                        onRotationChange={(r) => updateRot('caption', r)}
                     />
                 </div>
             );
@@ -291,6 +382,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.twoColTitle}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <div style={styles.min.twoColContainer}>
                         <div style={styles.min.column}>
@@ -305,9 +403,15 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                         newLeft[i] = val;
                                         handleEdit('left', newLeft as any);
                                     }}
+                                    fontSize={slide.fontSizes?.[`left_${i}`]}
+                                    onFontSizeChange={(s) => updateFS(`left_${i}`, s)}
+                                    draggable
+                                    position={slide.positions?.[`left_${i}`]}
+                                    onPositionChange={(p) => updatePos(`left_${i}`, p)}
+                                    rotation={slide.rotations?.[`left_${i}`]}
+                                    onRotationChange={(r) => updateRot(`left_${i}`, r)}
                                 />
                             ))}
-                            {/* Handle image placeholder if it's a string (though usually array for two-col) */}
                             {!Array.isArray(slide.left) && typeof slide.left === 'string' && (
                                 <img src={slide.left} alt="Left content" style={{ maxWidth: '100%', borderRadius: 8 }} />
                             )}
@@ -325,6 +429,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                         newRight[i] = val;
                                         handleEdit('right', newRight as any);
                                     }}
+                                    fontSize={slide.fontSizes?.[`right_${i}`]}
+                                    onFontSizeChange={(s) => updateFS(`right_${i}`, s)}
+                                    draggable
+                                    position={slide.positions?.[`right_${i}`]}
+                                    onPositionChange={(p) => updatePos(`right_${i}`, p)}
+                                    rotation={slide.rotations?.[`right_${i}`]}
+                                    onRotationChange={(r) => updateRot(`right_${i}`, r)}
                                 />
                             ))}
                             {!Array.isArray(slide.right) && typeof slide.right === 'string' && (
@@ -343,6 +454,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                             style={styles.min.quoteText}
                             value={`"${slide.text}"`}
                             onChange={(val) => handleEdit('text', val.replace(/^"|"$/g, ''))}
+                            fontSize={slide.fontSizes?.text}
+                            onFontSizeChange={(s) => updateFS('text', s)}
+                            draggable
+                            position={slide.positions?.text}
+                            onPositionChange={(p) => updatePos('text', p)}
+                            rotation={slide.rotations?.text}
+                            onRotationChange={(r) => updateRot('text', r)}
                         />
                     </div>
                     <EditableText
@@ -350,6 +468,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.quoteAuthor}
                         value={`— ${slide.author}`}
                         onChange={(val) => handleEdit('author', val.replace(/^—\s*/, ''))}
+                        fontSize={slide.fontSizes?.author}
+                        onFontSizeChange={(s) => updateFS('author', s)}
+                        draggable
+                        position={slide.positions?.author}
+                        onPositionChange={(p) => updatePos('author', p)}
+                        rotation={slide.rotations?.author}
+                        onRotationChange={(r) => updateRot('author', r)}
                     />
                 </div>
             );
@@ -361,6 +486,13 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.endText}
                         value={slide.text || slide.title || ''}
                         onChange={(val) => handleEdit(slide.text ? 'text' : 'title', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -372,12 +504,26 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         style={styles.min.twoColTitle}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={styles.min.statementText}
                         value={slide.text || slide.detail || ''}
                         onChange={(val) => handleEdit(slide.text ? 'text' : 'detail', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -566,8 +712,18 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
 // ============================================
 
 export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?: string; onEdit?: (field: string, value: any) => void }> = ({ slide, accentColor, logoUrl, onEdit }) => {
-    const handleEdit = (field: string, value: string) => {
+    const handleEdit = (field: string, value: any) => {
         if (onEdit) onEdit(field, value);
+    };
+
+    const updatePos = (key: string, pos: { x: number; y: number }) => {
+        handleEdit('positions', { ...slide.positions, [key]: pos });
+    };
+    const updateFS = (key: string, size: number) => {
+        handleEdit('fontSizes', { ...slide.fontSizes, [key]: size });
+    };
+    const updateRot = (key: string, deg: number) => {
+        handleEdit('rotations', { ...slide.rotations, [key]: deg });
     };
 
     switch (slide.type) {
@@ -594,6 +750,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                             style={styles.hyb.titleMain}
                             value={slide.title || ''}
                             onChange={(val) => handleEdit('title', val)}
+                            fontSize={slide.fontSizes?.title}
+                            onFontSizeChange={(s) => updateFS('title', s)}
+                            draggable
+                            position={slide.positions?.title}
+                            onPositionChange={(p) => updatePos('title', p)}
+                            rotation={slide.rotations?.title}
+                            onRotationChange={(r) => updateRot('title', r)}
                         />
                         <div style={{ width: 60, height: 4, background: accentColor, marginTop: 30 }} />
                         <EditableText
@@ -601,6 +764,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                             style={styles.hyb.titleSub}
                             value={slide.subtitle || ''}
                             onChange={(val) => handleEdit('subtitle', val)}
+                            fontSize={slide.fontSizes?.subtitle}
+                            onFontSizeChange={(s) => updateFS('subtitle', s)}
+                            draggable
+                            position={slide.positions?.subtitle}
+                            onPositionChange={(p) => updatePos('subtitle', p)}
+                            rotation={slide.rotations?.subtitle}
+                            onRotationChange={(r) => updateRot('subtitle', r)}
                         />
                     </div>
                 </div>
@@ -613,6 +783,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={styles.hyb.statementText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -624,12 +801,26 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={{ ...styles.hyb.contentTitle, color: accentColor }}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={styles.hyb.contentText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -655,6 +846,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={{ ...styles.hyb.imageCaption, color: accentColor }}
                         value={slide.caption || ''}
                         onChange={(val) => handleEdit('caption', val)}
+                        fontSize={slide.fontSizes?.caption}
+                        onFontSizeChange={(s) => updateFS('caption', s)}
+                        draggable
+                        position={slide.positions?.caption}
+                        onPositionChange={(p) => updatePos('caption', p)}
+                        rotation={slide.rotations?.caption}
+                        onRotationChange={(r) => updateRot('caption', r)}
                     />
                 </div>
             );
@@ -666,6 +864,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={{ ...styles.hyb.twoColTitle, color: accentColor }}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <div style={styles.hyb.twoColContainer}>
                         <div style={styles.hyb.column}>
@@ -681,6 +886,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                                         newLeft[i] = val;
                                         handleEdit('left', newLeft as any);
                                     }}
+                                    fontSize={slide.fontSizes?.[`left_${i}`]}
+                                    onFontSizeChange={(s) => updateFS(`left_${i}`, s)}
+                                    draggable
+                                    position={slide.positions?.[`left_${i}`]}
+                                    onPositionChange={(p) => updatePos(`left_${i}`, p)}
+                                    rotation={slide.rotations?.[`left_${i}`]}
+                                    onRotationChange={(r) => updateRot(`left_${i}`, r)}
                                 />
                             ))}
                             {!Array.isArray(slide.left) && typeof slide.left === 'string' && (
@@ -701,6 +913,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                                         newRight[i] = val;
                                         handleEdit('right', newRight as any);
                                     }}
+                                    fontSize={slide.fontSizes?.[`right_${i}`]}
+                                    onFontSizeChange={(s) => updateFS(`right_${i}`, s)}
+                                    draggable
+                                    position={slide.positions?.[`right_${i}`]}
+                                    onPositionChange={(p) => updatePos(`right_${i}`, p)}
+                                    rotation={slide.rotations?.[`right_${i}`]}
+                                    onRotationChange={(r) => updateRot(`right_${i}`, r)}
                                 />
                             ))}
                             {!Array.isArray(slide.right) && typeof slide.right === 'string' && (
@@ -719,12 +938,26 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={styles.hyb.quoteText}
                         value={slide.text || ''}
                         onChange={(val) => handleEdit('text', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={{ ...styles.hyb.quoteAuthor, color: accentColor }}
                         value={`— ${slide.author}`}
                         onChange={(val) => handleEdit('author', val.replace(/^—\s*/, ''))}
+                        fontSize={slide.fontSizes?.author}
+                        onFontSizeChange={(s) => updateFS('author', s)}
+                        draggable
+                        position={slide.positions?.author}
+                        onPositionChange={(p) => updatePos('author', p)}
+                        rotation={slide.rotations?.author}
+                        onRotationChange={(r) => updateRot('author', r)}
                     />
                 </div>
             );
@@ -736,6 +969,13 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={styles.hyb.endText}
                         value={slide.text || slide.title || ''}
                         onChange={(val) => handleEdit(slide.text ? 'text' : 'title', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                     <div style={{ width: 80, height: 4, background: accentColor, margin: '30px auto' }} />
                 </div>
@@ -748,12 +988,26 @@ export const HybridSlide: React.FC<{ slide: Slide; accentColor: string; logoUrl?
                         style={{ ...styles.hyb.twoColTitle, color: accentColor }}
                         value={slide.title || ''}
                         onChange={(val) => handleEdit('title', val)}
+                        fontSize={slide.fontSizes?.title}
+                        onFontSizeChange={(s) => updateFS('title', s)}
+                        draggable
+                        position={slide.positions?.title}
+                        onPositionChange={(p) => updatePos('title', p)}
+                        rotation={slide.rotations?.title}
+                        onRotationChange={(r) => updateRot('title', r)}
                     />
                     <EditableText
                         tagName="p"
                         style={styles.hyb.statementText}
                         value={slide.text || slide.detail || ''}
                         onChange={(val) => handleEdit(slide.text ? 'text' : 'detail', val)}
+                        fontSize={slide.fontSizes?.text}
+                        onFontSizeChange={(s) => updateFS('text', s)}
+                        draggable
+                        position={slide.positions?.text}
+                        onPositionChange={(p) => updatePos('text', p)}
+                        rotation={slide.rotations?.text}
+                        onRotationChange={(r) => updateRot('text', r)}
                     />
                 </div>
             );
@@ -1070,6 +1324,9 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
         const updateFS = (key: string, size: number) => {
             handleEdit('fontSizes', { ...slide.fontSizes, [key]: size });
         };
+        const updateRot = (key: string, deg: number) => {
+            handleEdit('rotations', { ...slide.rotations, [key]: deg });
+        };
 
         switch (slide.type) {
             case 'title':
@@ -1087,6 +1344,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.title}
                                 onPositionChange={(p) => updatePos('title', p)}
+                                rotation={slide.rotations?.title}
+                                onRotationChange={(r) => updateRot('title', r)}
                             />
                             <EditableText
                                 tagName="p"
@@ -1098,6 +1357,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.subtitle}
                                 onPositionChange={(p) => updatePos('subtitle', p)}
+                                rotation={slide.rotations?.subtitle}
+                                onRotationChange={(r) => updateRot('subtitle', r)}
                             />
                         </div>
                     </div>
@@ -1116,6 +1377,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.number}
                                 onPositionChange={(p) => updatePos('number', p)}
+                                rotation={slide.rotations?.number}
+                                onRotationChange={(r) => updateRot('number', r)}
                             />
                             <EditableText
                                 tagName="h3"
@@ -1127,6 +1390,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.label}
                                 onPositionChange={(p) => updatePos('label', p)}
+                                rotation={slide.rotations?.label}
+                                onRotationChange={(r) => updateRot('label', r)}
                             />
                             <EditableText
                                 tagName="p"
@@ -1138,6 +1403,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.detail}
                                 onPositionChange={(p) => updatePos('detail', p)}
+                                rotation={slide.rotations?.detail}
+                                onRotationChange={(r) => updateRot('detail', r)}
                             />
                         </div>
                     </div>
@@ -1156,6 +1423,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.title}
                                 onPositionChange={(p) => updatePos('title', p)}
+                                rotation={slide.rotations?.title}
+                                onRotationChange={(r) => updateRot('title', r)}
                             />
                             <div style={styles.max.gridContainer}>
                                 {slide.items?.map((item, i) => (
@@ -1178,6 +1447,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                             }}
                                             fontSize={slide.fontSizes?.[`grid_${i}`]}
                                             onFontSizeChange={(s) => updateFS(`grid_${i}`, s)}
+                                            draggable
+                                            position={slide.positions?.[`grid_${i}`]}
+                                            onPositionChange={(p) => updatePos(`grid_${i}`, p)}
+                                            rotation={slide.rotations?.[`grid_${i}`]}
+                                            onRotationChange={(r) => updateRot(`grid_${i}`, r)}
                                         />
                                     </div>
                                 ))}
@@ -1198,6 +1472,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('left', { ...leftData, title: val })}
                                 fontSize={slide.fontSizes?.leftTitle}
                                 onFontSizeChange={(s) => updateFS('leftTitle', s)}
+                                draggable
+                                position={slide.positions?.leftTitle}
+                                onPositionChange={(p) => updatePos('leftTitle', p)}
+                                rotation={slide.rotations?.leftTitle}
+                                onRotationChange={(r) => updateRot('leftTitle', r)}
                             />
                             <EditableText
                                 tagName="span"
@@ -1206,6 +1485,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('left', { ...leftData, value: val })}
                                 fontSize={slide.fontSizes?.leftValue}
                                 onFontSizeChange={(s) => updateFS('leftValue', s)}
+                                draggable
+                                position={slide.positions?.leftValue}
+                                onPositionChange={(p) => updatePos('leftValue', p)}
+                                rotation={slide.rotations?.leftValue}
+                                onRotationChange={(r) => updateRot('leftValue', r)}
                             />
                             <EditableText
                                 tagName="span"
@@ -1214,6 +1498,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('left', { ...leftData, label: val })}
                                 fontSize={slide.fontSizes?.leftLabel}
                                 onFontSizeChange={(s) => updateFS('leftLabel', s)}
+                                draggable
+                                position={slide.positions?.leftLabel}
+                                onPositionChange={(p) => updatePos('leftLabel', p)}
+                                rotation={slide.rotations?.leftLabel}
+                                onRotationChange={(r) => updateRot('leftLabel', r)}
                             />
                         </div>
                         <div style={styles.max.splitDivider}>
@@ -1227,6 +1516,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('right', { ...rightData, title: val })}
                                 fontSize={slide.fontSizes?.rightTitle}
                                 onFontSizeChange={(s) => updateFS('rightTitle', s)}
+                                draggable
+                                position={slide.positions?.rightTitle}
+                                onPositionChange={(p) => updatePos('rightTitle', p)}
+                                rotation={slide.rotations?.rightTitle}
+                                onRotationChange={(r) => updateRot('rightTitle', r)}
                             />
                             <EditableText
                                 tagName="span"
@@ -1235,6 +1529,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('right', { ...rightData, value: val })}
                                 fontSize={slide.fontSizes?.rightValue}
                                 onFontSizeChange={(s) => updateFS('rightValue', s)}
+                                draggable
+                                position={slide.positions?.rightValue}
+                                onPositionChange={(p) => updatePos('rightValue', p)}
+                                rotation={slide.rotations?.rightValue}
+                                onRotationChange={(r) => updateRot('rightValue', r)}
                             />
                             <EditableText
                                 tagName="span"
@@ -1243,6 +1542,11 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 onChange={(val) => handleEdit('right', { ...rightData, label: val })}
                                 fontSize={slide.fontSizes?.rightLabel}
                                 onFontSizeChange={(s) => updateFS('rightLabel', s)}
+                                draggable
+                                position={slide.positions?.rightLabel}
+                                onPositionChange={(p) => updatePos('rightLabel', p)}
+                                rotation={slide.rotations?.rightLabel}
+                                onRotationChange={(r) => updateRot('rightLabel', r)}
                             />
                         </div>
                     </div>
@@ -1261,6 +1565,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.title}
                                 onPositionChange={(p) => updatePos('title', p)}
+                                rotation={slide.rotations?.title}
+                                onRotationChange={(r) => updateRot('title', r)}
                             />
                             <EditableText
                                 tagName="p"
@@ -1272,6 +1578,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.text}
                                 onPositionChange={(p) => updatePos('text', p)}
+                                rotation={slide.rotations?.text}
+                                onRotationChange={(r) => updateRot('text', r)}
                             />
                         </div>
                     </div>
@@ -1305,6 +1613,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.caption}
                                 onPositionChange={(p) => updatePos('caption', p)}
+                                rotation={slide.rotations?.caption}
+                                onRotationChange={(r) => updateRot('caption', r)}
                             />
                         </div>
                     </div>
@@ -1323,6 +1633,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.title}
                                 onPositionChange={(p) => updatePos('title', p)}
+                                rotation={slide.rotations?.title}
+                                onRotationChange={(r) => updateRot('title', r)}
                             />
                             <button style={{ ...styles.max.ctaBtn, background: '#1a1a1a' }}>
                                 <EditableText
@@ -1350,6 +1662,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.title}
                                 onPositionChange={(p) => updatePos('title', p)}
+                                rotation={slide.rotations?.title}
+                                onRotationChange={(r) => updateRot('title', r)}
                             />
                             <EditableText
                                 tagName="p"
@@ -1361,6 +1675,8 @@ export const MaximalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                                 draggable
                                 position={slide.positions?.text}
                                 onPositionChange={(p) => updatePos('text', p)}
+                                rotation={slide.rotations?.text}
+                                onRotationChange={(r) => updateRot('text', r)}
                             />
                         </div>
                     </div>
@@ -1596,11 +1912,10 @@ const styles: Record<string, any> = {
         container: {
             width: 960,
             height: 540,
-            background: '#fff',
+            background: '#ffffff',
             position: 'relative',
             fontFamily: baseFont,
-            // overflow: 'hidden', // Allow arrows to be outside
-            boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.05)',
             borderRadius: 16,
         },
         slideContainer: {
@@ -1609,80 +1924,93 @@ const styles: Record<string, any> = {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 60,
+            padding: 80,
             boxSizing: 'border-box',
-            overflow: 'hidden', // Clip content here instead
+            overflow: 'hidden',
             borderRadius: 16,
         },
         titleSlide: {
             textAlign: 'center',
+            maxWidth: 800,
         },
         titleMain: {
-            fontSize: 48,
-            fontWeight: 700,
+            fontSize: 64,
+            fontWeight: 800,
             margin: 0,
-            letterSpacing: '-0.03em',
-            color: '#1a1a1a',
+            letterSpacing: '-0.04em',
+            color: '#000000',
             lineHeight: 1.1,
+            textWrap: 'balance',
         },
         titleSub: {
-            fontSize: 14,
+            fontSize: 18,
             fontWeight: 500,
-            marginTop: 20,
+            marginTop: 24,
             color: '#666',
             textTransform: 'uppercase',
-            letterSpacing: '0.15em',
+            letterSpacing: '0.2em',
         },
         statementSlide: {
-            maxWidth: 600,
+            maxWidth: 700,
             textAlign: 'center',
         },
         statementText: {
-            fontSize: 32,
-            fontWeight: 600,
-            lineHeight: 1.4,
-            color: '#1a1a1a',
+            fontSize: 42,
+            fontWeight: 700,
+            lineHeight: 1.3,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.02em',
+            textWrap: 'balance',
         },
         twoColSlide: {
             width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
         },
         twoColTitle: {
-            fontSize: 28,
-            fontWeight: 700,
-            marginBottom: 40,
+            fontSize: 42,
+            fontWeight: 800,
+            marginBottom: 50,
             textAlign: 'center',
-            color: '#1a1a1a',
+            color: '#000000',
+            letterSpacing: '-0.03em',
         },
         twoColContainer: {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'flex-start',
-            gap: 60,
+            gap: 80,
+            flex: 1,
         },
         column: {
             flex: 1,
-            maxWidth: 250,
+            maxWidth: 350,
         },
         columnLabel: {
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.15em',
             color: '#999',
             display: 'block',
-            marginBottom: 16,
+            marginBottom: 20,
+            borderBottom: '1px solid #eee',
+            paddingBottom: 8,
         },
         columnItem: {
-            fontSize: 16,
-            margin: '12px 0',
-            color: '#1a1a1a',
+            fontSize: 20,
+            margin: '16px 0',
+            color: '#333',
             fontWeight: 500,
+            lineHeight: 1.5,
         },
         columnDivider: {
             width: 1,
-            height: 200,
-            background: '#e0e0e0',
+            height: '80%',
+            background: '#eee',
+            alignSelf: 'center',
         },
         contentSlide: {
             width: '100%',
@@ -1691,49 +2019,55 @@ const styles: Record<string, any> = {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             textAlign: 'left',
         },
         contentTitle: {
-            fontSize: 36,
-            fontWeight: 700,
-            marginBottom: 30,
-            color: '#1a1a1a',
+            fontSize: 48,
+            fontWeight: 800,
+            marginBottom: 40,
+            color: '#000000',
+            letterSpacing: '-0.03em',
         },
         contentText: {
-            fontSize: 24,
+            fontSize: 28,
             lineHeight: 1.6,
-            color: '#4a4a4a',
+            color: '#333',
             whiteSpace: 'pre-wrap',
+            maxWidth: 800,
+            textWrap: 'pretty',
         },
         quoteSlide: {
             textAlign: 'center',
-            maxWidth: 550,
+            maxWidth: 700,
         },
         quoteText: {
-            fontSize: 28,
-            fontWeight: 500,
+            fontSize: 36,
+            fontWeight: 600,
             fontStyle: 'italic',
-            lineHeight: 1.5,
-            color: '#1a1a1a',
+            lineHeight: 1.4,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.01em',
+            textWrap: 'balance',
         },
         quoteAuthor: {
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: 600,
-            marginTop: 30,
+            marginTop: 32,
             color: '#666',
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            letterSpacing: '0.15em',
         },
         endSlide: {
             textAlign: 'center',
         },
         endText: {
-            fontSize: 44,
-            fontWeight: 700,
-            color: '#1a1a1a',
+            fontSize: 64,
+            fontWeight: 800,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.03em',
         },
         imageSlide: {
             width: '100%',
@@ -1746,11 +2080,12 @@ const styles: Record<string, any> = {
             boxSizing: 'border-box',
         },
         imageCaption: {
-            marginTop: 20,
-            fontSize: 18,
+            marginTop: 24,
+            fontSize: 20,
             color: '#666',
             textAlign: 'center',
             fontStyle: 'italic',
+            maxWidth: 600,
         },
         nav: {
             position: 'absolute',
@@ -1836,11 +2171,10 @@ const styles: Record<string, any> = {
         container: {
             width: 960,
             height: 540,
-            background: '#fff',
+            background: '#ffffff',
             position: 'relative',
             fontFamily: baseFont,
-            // overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.05)',
             borderRadius: 16,
         },
         slideContainer: {
@@ -1860,102 +2194,114 @@ const styles: Record<string, any> = {
         },
         titleContent: {
             position: 'absolute',
-            top: 60,
+            top: 80,
             left: 0,
             zIndex: 10,
+            maxWidth: 800,
         },
         titleMain: {
-            fontSize: 44,
-            fontWeight: 700,
+            fontSize: 60,
+            fontWeight: 800,
             margin: 0,
             letterSpacing: '-0.03em',
-            color: '#1a1a1a',
+            color: '#000000',
             lineHeight: 1.1,
+            textWrap: 'balance',
         },
         titleSub: {
-            fontSize: 14,
-            fontWeight: 500,
-            marginTop: 16,
-            color: '#666',
+            fontSize: 18,
+            fontWeight: 600,
+            marginTop: 20,
+            color: '#555',
             textTransform: 'uppercase',
-            letterSpacing: '0.15em',
+            letterSpacing: '0.2em',
         },
         statementSlide: {
-            maxWidth: 600,
+            maxWidth: 700,
             textAlign: 'center',
         },
         statementText: {
-            fontSize: 32,
-            fontWeight: 600,
-            lineHeight: 1.4,
-            color: '#1a1a1a',
+            fontSize: 40,
+            fontWeight: 700,
+            lineHeight: 1.3,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.02em',
+            textWrap: 'balance',
         },
         twoColSlide: {
             width: '100%',
         },
         twoColTitle: {
-            fontSize: 28,
-            fontWeight: 700,
+            fontSize: 40,
+            fontWeight: 800,
             marginBottom: 40,
             textAlign: 'center',
-            color: '#1a1a1a',
+            color: '#000000',
+            letterSpacing: '-0.02em',
         },
         twoColContainer: {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'flex-start',
-            gap: 60,
+            gap: 80,
         },
         column: {
             flex: 1,
-            maxWidth: 250,
+            maxWidth: 300,
         },
         columnLabel: {
-            fontSize: 11,
-            fontWeight: 600,
+            fontSize: 12,
+            fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.15em',
             display: 'block',
-            marginBottom: 16,
+            marginBottom: 20,
+            paddingBottom: 8,
+            borderBottom: '2px solid currentColor',
         },
         columnItem: {
-            fontSize: 16,
-            margin: '12px 0',
-            color: '#1a1a1a',
+            fontSize: 20,
+            margin: '16px 0',
+            color: '#333',
             fontWeight: 500,
+            lineHeight: 1.5,
         },
         columnDivider: {
-            width: 2,
+            width: 4,
             height: 200,
+            borderRadius: 2,
         },
         quoteSlide: {
             textAlign: 'center',
-            maxWidth: 550,
+            maxWidth: 700,
         },
         quoteText: {
-            fontSize: 28,
-            fontWeight: 500,
+            fontSize: 36,
+            fontWeight: 600,
             fontStyle: 'italic',
-            lineHeight: 1.5,
-            color: '#1a1a1a',
+            lineHeight: 1.4,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.01em',
+            textWrap: 'balance',
         },
         quoteAuthor: {
-            fontSize: 13,
-            fontWeight: 600,
-            marginTop: 30,
+            fontSize: 16,
+            fontWeight: 700,
+            marginTop: 32,
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            letterSpacing: '0.15em',
         },
         endSlide: {
             textAlign: 'center',
         },
         endText: {
-            fontSize: 44,
-            fontWeight: 700,
-            color: '#1a1a1a',
+            fontSize: 64,
+            fontWeight: 800,
+            color: '#000000',
             margin: 0,
+            letterSpacing: '-0.03em',
         },
         imageSlide: {
             width: '100%',
@@ -1968,10 +2314,12 @@ const styles: Record<string, any> = {
             boxSizing: 'border-box',
         },
         imageCaption: {
-            marginTop: 20,
-            fontSize: 18,
+            marginTop: 24,
+            fontSize: 20,
             textAlign: 'center',
             fontStyle: 'italic',
+            maxWidth: 600,
+            fontWeight: 500,
         },
         nav: {
             position: 'absolute',
@@ -2021,8 +2369,7 @@ const styles: Record<string, any> = {
             background: '#FFFBF5',
             position: 'relative',
             fontFamily: baseFont,
-            // overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.05)',
             borderRadius: 16,
         },
         slideContainer: {
@@ -2042,72 +2389,80 @@ const styles: Record<string, any> = {
         titleContent: {
             textAlign: 'center',
             pointerEvents: 'auto',
+            maxWidth: 800,
         },
         titleMain: {
-            fontSize: 52,
-            fontWeight: 800,
+            fontSize: 72,
+            fontWeight: 900,
             color: '#1a1a1a',
             margin: 0,
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.04em',
+            lineHeight: 0.95,
+            textWrap: 'balance',
         },
         titleSub: {
-            fontSize: 18,
+            fontSize: 24,
             color: '#555',
-            marginTop: 16,
-            fontWeight: 500,
+            marginTop: 24,
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
         },
         bigNumContent: {
             textAlign: 'center',
             pointerEvents: 'auto',
         },
         bigNum: {
-            fontSize: 110,
-            fontWeight: 800,
+            fontSize: 140,
+            fontWeight: 900,
             display: 'block',
-            letterSpacing: '-0.04em',
+            letterSpacing: '-0.06em',
+            lineHeight: 0.9,
         },
         bigNumLabel: {
-            fontSize: 26,
+            fontSize: 32,
             color: '#1a1a1a',
-            margin: '10px 0 8px',
-            fontWeight: 700,
+            margin: '16px 0 8px',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
         },
         bigNumDetail: {
-            fontSize: 15,
+            fontSize: 18,
             color: '#666',
             margin: 0,
-            fontWeight: 500,
+            fontWeight: 600,
         },
         gridContent: {
             textAlign: 'center',
             pointerEvents: 'auto',
         },
         gridTitle: {
-            fontSize: 32,
+            fontSize: 48,
             color: '#1a1a1a',
-            marginBottom: 30,
-            fontWeight: 700,
+            marginBottom: 40,
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
         },
         gridContainer: {
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 16,
-            maxWidth: 400,
+            gap: 20,
+            maxWidth: 500,
         },
         gridItem: {
-            borderRadius: 20,
-            padding: '26px 20px',
+            borderRadius: 24,
+            padding: '30px 24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 10,
+            gap: 12,
         },
         gridIcon: {
-            fontSize: 26,
+            fontSize: 32,
         },
         gridLabel: {
-            fontSize: 15,
-            fontWeight: 600,
+            fontSize: 18,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
         },
         splitContent: {
             display: 'flex',
@@ -2123,43 +2478,46 @@ const styles: Record<string, any> = {
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
+            padding: 40,
         },
         splitTitle: {
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.2em',
-            marginBottom: 12,
+            marginBottom: 16,
             opacity: 0.9,
         },
         splitValue: {
-            fontSize: 68,
-            fontWeight: 800,
+            fontSize: 80,
+            fontWeight: 900,
+            letterSpacing: '-0.04em',
+            lineHeight: 1,
         },
         splitLabel: {
-            fontSize: 15,
-            marginTop: 8,
+            fontSize: 18,
+            marginTop: 12,
             opacity: 0.9,
-            fontWeight: 500,
+            fontWeight: 600,
         },
         splitDivider: {
-            width: 60,
+            width: 80,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             background: '#FFFBF5',
         },
         splitArrowCircle: {
-            width: 40,
-            height: 40,
+            width: 50,
+            height: 50,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 12,
-            fontWeight: 800,
+            fontSize: 14,
+            fontWeight: 900,
             color: '#1a1a1a',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         },
         contentSlide: {
             width: '100%',
@@ -2174,30 +2532,33 @@ const styles: Record<string, any> = {
             position: 'relative',
         },
         contentTitle: {
-            fontSize: 48,
+            fontSize: 64,
             fontWeight: 900,
-            marginBottom: 30,
+            marginBottom: 40,
             color: '#1a1a1a',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.04em',
+            lineHeight: 1,
         },
         contentText: {
-            fontSize: 24,
-            lineHeight: 1.5,
-            fontWeight: 500,
+            fontSize: 32,
+            lineHeight: 1.4,
+            fontWeight: 600,
             color: '#1a1a1a',
             whiteSpace: 'pre-wrap',
-            maxWidth: '80%',
+            maxWidth: '85%',
+            letterSpacing: '-0.02em',
         },
         endContent: {
             textAlign: 'center',
             pointerEvents: 'auto',
         },
         endTitle: {
-            fontSize: 64,
-            fontWeight: 800,
+            fontSize: 80,
+            fontWeight: 900,
             color: '#1a1a1a',
             marginBottom: 40,
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.05em',
+            lineHeight: 0.9,
         },
         imageSlide: {
             width: '100%',
@@ -2212,15 +2573,16 @@ const styles: Record<string, any> = {
             position: 'relative',
         },
         imageCaption: {
-            marginTop: 20,
-            fontSize: 24,
+            marginTop: 24,
+            fontSize: 28,
             color: '#1a1a1a',
             textAlign: 'center',
-            fontWeight: 700,
+            fontWeight: 800,
             background: '#fff',
-            padding: '8px 16px',
-            borderRadius: 8,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            padding: '12px 24px',
+            borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            transform: 'rotate(-1deg)',
         },
         ctaBtn: {
             padding: '16px 40px',
