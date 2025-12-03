@@ -30,6 +30,8 @@ export interface Slide {
     positions?: { [key: string]: { x: number; y: number } };
     fontSizes?: { [key: string]: number };
     rotations?: { [key: string]: number };
+    colors?: { [key: string]: string };
+    backgroundColor?: string;
 }
 
 export interface Presentation {
@@ -130,12 +132,15 @@ interface EditableTextProps {
     onPositionChange?: (pos: { x: number; y: number }) => void;
     rotation?: number;
     onRotationChange?: (deg: number) => void;
+    color?: string;
+    onColorChange?: (color: string) => void;
+    onDelete?: () => void;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
     value, onChange, style, tagName = 'p', className,
     fontSize, onFontSizeChange, draggable, position, onPositionChange,
-    rotation, onRotationChange
+    rotation, onRotationChange, color, onColorChange, onDelete
 }) => {
     const Tag = tagName as any;
     const [isFocused, setIsFocused] = useState(false);
@@ -194,6 +199,47 @@ const EditableText: React.FC<EditableTextProps> = ({
                             </button>
                         </>
                     )}
+                    {onColorChange && (
+                        <>
+                            <div style={{ width: 1, height: 16, background: '#444' }}></div>
+                            <input
+                                type="color"
+                                value={color || (style?.color as string) || '#000000'}
+                                onChange={(e) => onColorChange(e.target.value)}
+                                style={{
+                                    width: 24,
+                                    height: 24,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    borderRadius: 4
+                                }}
+                                title="Change text color"
+                            />
+                        </>
+                    )}
+                    {onDelete && (
+                        <>
+                            <div style={{ width: 1, height: 16, background: '#444' }}></div>
+                            <button
+                                onClick={() => {
+                                    if (confirm('Delete this text?')) {
+                                        onDelete();
+                                    }
+                                }}
+                                style={{
+                                    color: '#ff6b6b',
+                                    border: 'none',
+                                    background: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: 16,
+                                    fontWeight: 'bold'
+                                }}
+                                title="Delete text"
+                            >
+                                🗑️
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
             <Tag
@@ -209,7 +255,8 @@ const EditableText: React.FC<EditableTextProps> = ({
                     outline: isFocused ? '2px dashed rgba(74, 155, 140, 0.5)' : 'none',
                     cursor: 'text',
                     fontSize: fontSize || style?.fontSize,
-                    transition: 'font-size 0.2s'
+                    color: color || style?.color,
+                    transition: 'font-size 0.2s, color 0.2s'
                 }}
                 className={`editable-text ${className || ''}`}
             >
@@ -260,6 +307,12 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     const updateRot = (key: string, deg: number) => {
         handleEdit('rotations', { ...slide.rotations, [key]: deg });
     };
+    const updateColor = (key: string, color: string) => {
+        handleEdit('colors', { ...slide.colors, [key]: color });
+    };
+    const deleteText = (field: string) => {
+        handleEdit(field, '');
+    };
 
     switch (slide.type) {
         case 'title':
@@ -278,6 +331,9 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('title', p)}
                         rotation={slide.rotations?.title}
                         onRotationChange={(r) => updateRot('title', r)}
+                        color={slide.colors?.title}
+                        onColorChange={(c) => updateColor('title', c)}
+                        onDelete={() => deleteText('title')}
                     />
                     <EditableText
                         tagName="p"
@@ -579,9 +635,45 @@ export const MinimalistTemplate: React.FC<TemplateProps & { onEdit?: (slideIndex
     return (
         <div style={styles.min.container} className="slide-container">
             <GlobalStyles />
-            <div style={styles.min.slideContainer}>
+            <div style={{
+                ...styles.min.slideContainer,
+                background: slides[currentSlide]?.backgroundColor || styles.min.container.background
+            }}>
                 {renderSlide(slides[currentSlide])}
             </div>
+
+            {/* Background Color Picker */}
+            {!isFullscreen && (
+                <label
+                    style={{
+                        position: 'absolute',
+                        top: 20,
+                        right: 80,
+                        zIndex: 100,
+                        background: slides[currentSlide]?.backgroundColor || '#ffffff',
+                        border: '2px solid #ddd',
+                        borderRadius: 8,
+                        width: 36,
+                        height: 36,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        fontSize: 18,
+                        transition: 'all 0.2s'
+                    }}
+                    title="Change background color"
+                >
+                    🎨
+                    <input
+                        type="color"
+                        value={slides[currentSlide]?.backgroundColor || '#ffffff'}
+                        onChange={(e) => onEdit && onEdit(currentSlide, 'backgroundColor', e.target.value)}
+                        style={{ display: 'none' }}
+                    />
+                </label>
+            )}
 
             {/* External Navigation Arrows */}
             {/* @ts-ignore */}
