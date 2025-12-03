@@ -32,6 +32,7 @@ export interface Slide {
     rotations?: { [key: string]: number };
     colors?: { [key: string]: string };
     backgroundColor?: string;
+    maxWidths?: { [key: string]: number };
 }
 
 export interface Presentation {
@@ -135,12 +136,14 @@ interface EditableTextProps {
     color?: string;
     onColorChange?: (color: string) => void;
     onDelete?: () => void;
+    maxWidth?: number;
+    onMaxWidthChange?: (width: number) => void;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
     value, onChange, style, tagName = 'p', className,
     fontSize, onFontSizeChange, draggable, position, onPositionChange,
-    rotation, onRotationChange, color, onColorChange, onDelete
+    rotation, onRotationChange, color, onColorChange, onDelete, maxWidth, onMaxWidthChange
 }) => {
     const Tag = tagName as any;
     const [isFocused, setIsFocused] = useState(false);
@@ -151,8 +154,9 @@ const EditableText: React.FC<EditableTextProps> = ({
             position: 'relative',
             display: 'inline-block',
             width: '100%',
+            maxWidth: maxWidth ? `${maxWidth}%` : style?.maxWidth,
             transform: `rotate(${rotation || 0}deg)`,
-            transition: 'transform 0.2s'
+            transition: 'transform 0.2s, max-width 0.2s'
         }}>
             {isFocused && (onFontSizeChange || onRotationChange) && (
                 <div style={{
@@ -240,6 +244,25 @@ const EditableText: React.FC<EditableTextProps> = ({
                             </button>
                         </>
                     )}
+                    {onMaxWidthChange && (
+                        <>
+                            <div style={{ width: 1, height: 16, background: '#444' }}></div>
+                            <button
+                                onClick={() => onMaxWidthChange(Math.max(20, (maxWidth || 100) - 10))}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                                title="Decrease width"
+                            >
+                                ↔️-
+                            </button>
+                            <button
+                                onClick={() => onMaxWidthChange(Math.min(100, (maxWidth || 100) + 10))}
+                                style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}
+                                title="Increase width"
+                            >
+                                ↔️+
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
             <Tag
@@ -313,6 +336,9 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
     const deleteText = (field: string) => {
         handleEdit(field, '');
     };
+    const updateMaxWidth = (key: string, width: number) => {
+        handleEdit('maxWidths', { ...slide.maxWidths, [key]: width });
+    };
 
     switch (slide.type) {
         case 'title':
@@ -334,6 +360,8 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         color={slide.colors?.title}
                         onColorChange={(c) => updateColor('title', c)}
                         onDelete={() => deleteText('title')}
+                        maxWidth={slide.maxWidths?.title}
+                        onMaxWidthChange={(w) => updateMaxWidth('title', w)}
                     />
                     <EditableText
                         tagName="p"
@@ -347,6 +375,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('subtitle', p)}
                         rotation={slide.rotations?.subtitle}
                         onRotationChange={(r) => updateRot('subtitle', r)}
+                        color={slide.colors?.subtitle}
+                        onColorChange={(c) => updateColor('subtitle', c)}
+                        onDelete={() => deleteText('subtitle')}
+                        maxWidth={slide.maxWidths?.subtitle}
+                        onMaxWidthChange={(w) => updateMaxWidth('subtitle', w)}
                     />
                 </div>
             );
@@ -365,6 +398,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('text', p)}
                         rotation={slide.rotations?.text}
                         onRotationChange={(r) => updateRot('text', r)}
+                        color={slide.colors?.text}
+                        onColorChange={(c) => updateColor('text', c)}
+                        onDelete={() => deleteText('text')}
+                        maxWidth={slide.maxWidths?.text}
+                        onMaxWidthChange={(w) => updateMaxWidth('text', w)}
                     />
                 </div>
             );
@@ -383,6 +421,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('title', p)}
                         rotation={slide.rotations?.title}
                         onRotationChange={(r) => updateRot('title', r)}
+                        color={slide.colors?.title}
+                        onColorChange={(c) => updateColor('title', c)}
+                        onDelete={() => deleteText('title')}
+                        maxWidth={slide.maxWidths?.title}
+                        onMaxWidthChange={(w) => updateMaxWidth('title', w)}
                     />
                     <EditableText
                         tagName="p"
@@ -396,6 +439,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('text', p)}
                         rotation={slide.rotations?.text}
                         onRotationChange={(r) => updateRot('text', r)}
+                        color={slide.colors?.text}
+                        onColorChange={(c) => updateColor('text', c)}
+                        onDelete={() => deleteText('text')}
+                        maxWidth={slide.maxWidths?.text}
+                        onMaxWidthChange={(w) => updateMaxWidth('text', w)}
                     />
                 </div>
             );
@@ -427,6 +475,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('caption', p)}
                         rotation={slide.rotations?.caption}
                         onRotationChange={(r) => updateRot('caption', r)}
+                        color={slide.colors?.caption}
+                        onColorChange={(c) => updateColor('caption', c)}
+                        onDelete={() => deleteText('caption')}
+                        maxWidth={slide.maxWidths?.caption}
+                        onMaxWidthChange={(w) => updateMaxWidth('caption', w)}
                     />
                 </div>
             );
@@ -445,6 +498,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('title', p)}
                         rotation={slide.rotations?.title}
                         onRotationChange={(r) => updateRot('title', r)}
+                        color={slide.colors?.title}
+                        onColorChange={(c) => updateColor('title', c)}
+                        onDelete={() => deleteText('title')}
+                        maxWidth={slide.maxWidths?.title}
+                        onMaxWidthChange={(w) => updateMaxWidth('title', w)}
                     />
                     <div style={styles.min.twoColContainer}>
                         <div style={styles.min.column}>
@@ -517,6 +575,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                             onPositionChange={(p) => updatePos('text', p)}
                             rotation={slide.rotations?.text}
                             onRotationChange={(r) => updateRot('text', r)}
+                            color={slide.colors?.text}
+                            onColorChange={(c) => updateColor('text', c)}
+                            onDelete={() => deleteText('text')}
+                            maxWidth={slide.maxWidths?.text}
+                            onMaxWidthChange={(w) => updateMaxWidth('text', w)}
                         />
                     </div>
                     <EditableText
@@ -531,6 +594,11 @@ export const MinimalistSlide: React.FC<{ slide: Slide; logoUrl?: string; onEdit?
                         onPositionChange={(p) => updatePos('author', p)}
                         rotation={slide.rotations?.author}
                         onRotationChange={(r) => updateRot('author', r)}
+                        color={slide.colors?.author}
+                        onColorChange={(c) => updateColor('author', c)}
+                        onDelete={() => deleteText('author')}
+                        maxWidth={slide.maxWidths?.author}
+                        onMaxWidthChange={(w) => updateMaxWidth('author', w)}
                     />
                 </div>
             );
