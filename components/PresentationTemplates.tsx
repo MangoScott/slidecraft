@@ -2020,7 +2020,8 @@ const styles: Record<string, any> = {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            textAlign: 'left',
+            alignItems: 'center', // Center horizontally
+            textAlign: 'center', // Center text by default
         },
         contentTitle: {
             fontSize: 48,
@@ -2028,6 +2029,7 @@ const styles: Record<string, any> = {
             marginBottom: 40,
             color: '#000000',
             letterSpacing: '-0.03em',
+            width: '100%',
         },
         contentText: {
             fontSize: 28,
@@ -2036,6 +2038,8 @@ const styles: Record<string, any> = {
             whiteSpace: 'pre-wrap',
             maxWidth: 800,
             textWrap: 'pretty',
+            textAlign: 'left', // Keep body text left-aligned for readability
+            alignSelf: 'center',
         },
         quoteSlide: {
             textAlign: 'center',
@@ -2191,13 +2195,19 @@ const styles: Record<string, any> = {
             width: '100%',
             height: '100%',
             position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
         },
         titleContent: {
-            position: 'absolute',
-            top: 80,
-            left: 0,
+            position: 'relative', // Changed from absolute
             zIndex: 10,
             maxWidth: 800,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
         },
         titleMain: {
             fontSize: 60,
@@ -2527,7 +2537,8 @@ const styles: Record<string, any> = {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            textAlign: 'left',
+            alignItems: 'center', // Center horizontally
+            textAlign: 'center',
             zIndex: 2,
             position: 'relative',
         },
@@ -2538,6 +2549,7 @@ const styles: Record<string, any> = {
             color: '#1a1a1a',
             letterSpacing: '-0.04em',
             lineHeight: 1,
+            width: '100%',
         },
         contentText: {
             fontSize: 32,
@@ -2547,6 +2559,8 @@ const styles: Record<string, any> = {
             whiteSpace: 'pre-wrap',
             maxWidth: '85%',
             letterSpacing: '-0.02em',
+            textAlign: 'left', // Keep body text left-aligned
+            alignSelf: 'center',
         },
         endContent: {
             textAlign: 'center',
